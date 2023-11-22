@@ -1,0 +1,270 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Emission Factors {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}
+{% endblock stylesheets %}
+
+{% block content %}
+
+    <div class="container-fluid py-4">
+      <div class="row">
+        <div class="col-12">
+          <div class="card mb-4">
+            <div class="card-header pb-0">
+              <div class="d-flex align-items-center">
+                <h6 class="me-2 flex-grow-1">Emission Factors Table</h6>
+                <div class="d-flex nav-item dropdown">
+                  <a class="dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false"></a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="/asset_data">Asset Data</a></li>
+                    <li><a class="dropdown-item" href="/emissions">Asset Emissions</a></li>
+                    <li><a class="dropdown-item" href="/locations">Locations</a></li>
+                    <li><a class="dropdown-item" href="/emission_factors">Emissions Factors</a></li>
+                    <li><a class="dropdown-item" href="/asset_categories">Asset Category</a></li>
+                  </ul>
+                </div>
+                <div class="input-group mt-3 justify-content-end">
+                  <div class="row">
+                    <div class="col-auto">
+                    <form class="d-flex" method="POST" role="search">
+                      <div class="input-group">
+                          <select class="form-select form-select-sm text-body" id="searchBy" name="searchBy" aria-label="Search by" required>
+                            <option selected disabled>Select an option</option>
+                            <option value="kode_ef">Emission Factor Code</option>
+                            <option value="nama_ef">Emission Factor Name</option>
+                            <option value="nilai_ef">Emission Factor Value</option>
+                            <option value="tahun_relevansi_ef">Relevance Year</option>
+                          </select>
+                          <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
+                          <input type="text" class="form-control w-15" id="searchText" name="searchText" placeholder="Type here..." required>
+                        </div>
+                      </div>
+                      <div class="col-auto">
+                          <button type="submit" class="btn bg-gradient-primary mb-0" id="searchButton">Search</button>
+                      </div>
+                    </form>
+                    <div class="col-auto">
+                      <a class="btn bg-gradient-dark mb-0" href="javascript:;" data-bs-toggle="modal" data-bs-target="#create_new_modal">
+                        <i class="fas fa-plus"></i>
+                        &nbsp;&nbsp;Add New Data
+                      </a>
+                    </div>
+                  </div>
+                </div>                
+              </div>
+              <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                  <table class="table align-items-center justify-content-center mb-0">
+                    <thead>
+                      <tr>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Emission Factor Code</th>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Emission Factor Name</th>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Emission Factor Value</th>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Relevance Year</th>
+                        <th></th>
+                        <th></th> 
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for ef in emission_factors.items %}
+                        <tr>
+                          <td class="text-sm font-weight-bold mb-0 ms-2">{{ ef.kode_ef }}</td>
+                          <td class="text-sm font-weight-bold mb-0">{{ ef.nama_ef }}</td>
+                          <td class="text-sm font-weight-bold mb-0">{{ ef.nilai_ef }}</td>
+                          <td class="text-sm font-weight-bold mb-0">{{ ef.tahun_relevansi_ef }}</td>
+                          <td class="align-middle">
+                            <a href="#" class="text-secondary font-weight-bold text-xs text-dark edit-btn" data-kode-ef="{{ ef.kode_ef }}" data-nama-ef="{{ ef.nama_ef }}" data-nilai-ef="{{ ef.nilai_ef }}" data-tahun-relevansi-ef="{{ ef.tahun_relevansi_ef }}" data-bs-toggle="modal" data-bs-target="#edit_modal">
+                              <i class="fas fa-pencil-alt text-dark me-2" aria-hidden="true"></i>
+                              Edit
+                            </a>
+                          </td>
+                          <td class="align-middle">
+                            <form action="{{ url_for('home_blueprint.delete_emission_factor', ef_id=ef.kode_ef) }}" method="post">
+                              <input type="hidden" name="_method" value="POST">
+                              <button type="submit" class="bg-transparent border-0 text-xs text-danger" data-toggle="tooltip" data-original-title="Delete user">
+                                <i class="far fa-trash-alt me-2" aria-hidden="true"></i>
+                                Delete
+                              </button>
+                            </form>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+            <div class="card-footer">
+              <nav aria-label="Locations Pagination">
+                <ul class="pagination justify-content-center mb-0">
+                  {% if emission_factors.has_prev %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ emission_factors.prev_num }}">Prev</a>
+                    </li>
+                  {% endif %}
+                  {% for num in emission_factors.iter_pages(left_edge=1, left_current=1, right_current=2, right_edge=1) %}
+                    {% if num %}
+                      {% if emission_factors.page == num %}
+                        <li class="page-item active" aria-current="page">
+                          <a class="page-link" href="?page={{ num }}"><strong>{{ num }}</strong></a>
+                        </li>
+                      {% else %}
+                        <li class="page-item">
+                          <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                      {% endif %}
+                    {% else %}
+                      <li class="page-item disabled">
+                        <span class="page-link">&hellip;</span>
+                      </li>
+                    {% endif %}
+                  {% endfor %}
+                  {% if emission_factors.has_next %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ emission_factors.next_num }}">Next</a>
+                    </li>
+                  {% endif %}
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% include "includes/footer.html" %}
+    </div>
+    
+    <div class="modal fade" id="create_new_modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <form action="/add_emission_factor" method="POST" id="create-form">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Add New Emission Factor Data</h5>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="ef_code_type">Emission Factor Type</label>
+                <select id="ef_code_type" class="form-select" name="ef_code_type">
+                  <option selected disabled>Select Type of Emission Factors</option>
+                  <option value="EL_conv" >Electricity Consumption Emission Factors</option>
+                  <option value="carbon_conv" >Carbon Emission Factors</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="ef_code">Emission Factor Code</label>
+                <input id="ef_code" class="form-control" name="ef_code" placeholder="Auto Generated Emission Factor Code" required disabled readonly>
+              </div>
+              <div class="mb-3">
+                <label for="ef_name">Emission Factor Name</label>
+                <input id="ef_name" class="form-control" name="ef_name" placeholder="Emission Factor Name (Units)" required>
+              </div>
+              <div class="mb-3">
+                <label for="ef_value">Emission Factor Value</label>
+                <input id="ef_value" class="form-control" name="ef_value" placeholder="Emission Factor Value based on the Units" type="number" required>
+              </div>
+              <div class="mb-3">
+                <label for="ef_year">Relevance Year</label>
+                <input id="ef_year" class="form-control" name="ef_year" placeholder="Emission Factor Source Year" type="number" required>
+              </div>
+              <p id="create-error" class="text-danger fw-bold"></p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <input type="submit" class="btn btn-primary" value="Add Data">
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="edit_modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <form action="{{ url_for('home_blueprint.update_emission_factor', ef_id='') }}" method="POST" id="edit-form">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Edit Emission Factor Data</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="ef_code">Emission Factor Code</label>
+                <input id="ef_code" class="form-control" name="ef_code" readonly="readonly">
+              </div>
+              <div class="mb-3">
+                <label for="ef_name">Emission Factor Name</label>
+                <input id="ef_name" class="form-control" name="ef_name" placeholder="Emission Factor Name (Units)" required>
+              </div>
+              <div class="mb-3">
+                <label for="ef_value">Emission Factor Value</label>
+                <input id="ef_value" class="form-control" name="ef_value" placeholder="Emission Factor Value based on the Units" required>
+              </div>
+              <div class="mb-3">
+                <label for="ef_year">Relevance Year</label>
+                <input id="ef_year" class="form-control" name="ef_year" placeholder="Emission Factor Source Year" type="number" required>
+              </div>
+              <p id="create-error" class="text-danger fw-bold"></p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <input type="submit" class="btn btn-primary" value="Update Data">
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+        
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      $('.edit-btn').on('click', function(event) {
+        var button = $(event.target); // Tombol yang mengaktifkan modal
+        var kodeEf = button.data('kode-ef'); // Mengambil nilai dari atribut data-kode-ef
+        var namaEf = button.data('nama-ef'); // Mengambil teks dari atribut data-nama-ef
+        var nilaiEf = button.data('nilai-ef'); // Mengambil teks dari atribut data-nilai-ef
+        var tahunRelevansiEf = button.data('tahun-relevansi-ef'); // Mengambil teks dari atribut data-tahun-relevansi-ef
+
+        // Menetapkan nilai kode_ef, nama_ef, nilai_ef, dan tahun_relevansi_ef ke input di dalam modal
+        var modal = $('#edit_modal');
+        modal.find('#ef_code').val(kodeEf);
+        modal.find('#ef_name').val(namaEf);
+        modal.find('#ef_value').val(nilaiEf);
+        modal.find('#ef_year').val(tahunRelevansiEf);
+
+        // Mengubah atribut action pada form untuk menyertakan ID emission factor
+        var form = modal.find('#edit-form');
+        var actionUrl = form.attr('action');
+        form.attr('action', actionUrl + kodeEf);
+      });
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+      var efCodeTypeSelect = document.getElementById('ef_code_type');
+      var efCodeInput = document.getElementById('ef_code');
+      
+      efCodeTypeSelect.addEventListener('change', function() {
+        var selectedOption = efCodeTypeSelect.options[efCodeTypeSelect.selectedIndex];
+        
+        if (selectedOption.value === 'EL_conv') {
+          efCodeInput.value = '{{ current_electricity_id }}';
+        } else if (selectedOption.value === 'carbon_conv') {
+          efCodeInput.value = '{{ current_carbon_id }}';
+        } else {
+          efCodeInput.value = '';
+        }
+      });
+    });
+    // Mendapatkan tahun saat ini
+    var currentYear = new Date().getFullYear();
+    // Mengatur nilai tahun saat ini ke input dengan id "year"
+    document.getElementById("ef_year").value = currentYear;  
+    
+    
+    
+  </script>
+{% endblock %}
+

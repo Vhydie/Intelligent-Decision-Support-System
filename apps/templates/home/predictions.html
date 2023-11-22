@@ -1,0 +1,1235 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Carbon Predictions {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+    <div class="container-fluid py-4">
+
+      <div class="row">
+        <div class="col-12">
+          <div class="card mb-4"> 
+            <div class="card-header pb-0">
+              <div class="d-flex align-items-center">
+                <h5 class="me-2 mt-2">IT Asset Emission Predictions</h5>
+              </div>
+              <div class="card-body px-0 pt-0 pb-2">
+                <div class="col-auto">
+                  <form class="needs-validation" novalidate>
+                    <div class="my-3">
+                      <h6 class="mb-3">Predictions Controls:</h6>
+                      <div class="row auto">
+                        <div class="col-auto">
+                          <div class="form-check">
+                            <input id="all_options" name="prediction_option" type="radio" class="form-check-input" required checked>
+                            <label class="form-check-label" for="all_options">All Asset Subcategory Predictions</label>
+                          </div>
+                        </div>
+                        <div class="col-auto">
+                          <div class="form-check">
+                            <input id="category_options" name="prediction_option" type="radio" class="form-check-input" required>
+                            <label class="form-check-label" for="category_options">Specific Category Predictions</label>
+                          </div>
+                        </div>
+                        <div class="col-auto">
+                          <div class="form-check">
+                            <input id="sub_category_options" name="prediction_option" type="radio" class="form-check-input" required>
+                            <label class="form-check-label" for="sub_category_options">Specific Subcategory Predictions</label>
+                          </div>
+                        </div>
+                      </div>                    
+                    </div>
+                    <div class="row g-3">
+                      <div class="col-md-5" id="category_group" style="display: none;">
+                        <label for="category" class="form-label">IT Asset Category</label>
+                        <select class="form-select" id="category" required onchange="getSubcategories(this)">
+                          <option selected disabled>Select IT Asset Category</option>
+                          {% for category in asset_categories %}
+                            <option>{{ category[0] }}</option>
+                          {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">
+                          Please select a valid IT Asset Category.
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4" id="sub_category_group" style="display: none;">
+                        <label for="sub_category" class="form-label">IT Asset Subcategory</label>
+                        <select class="form-select" id="sub_category" required>
+                          <option selected disabled>Select IT Asset Subcategory</option>
+                        </select>
+                        <div class="invalid-feedback">
+                          Please provide a valid subcategory.
+                        </div>
+                      </div>
+              
+                      <div class="col-md-3">
+                        <label for="years" class="form-label">Years to Predict</label>
+                        <select class="form-select" id="years" required>
+                          <option selected disabled>Select Years</option>
+                          <option>1 Years from the Latest Years</option>
+                          <option>2 Years from the Latest Years</option>
+                          <option>3 Years from the Latest Years</option>
+                          <option>4 Years from the Latest Years</option>
+                          <option>5 Years from the Latest Years</option>
+                        </select>
+                      </div>
+                  <button class="btn bg-gradient-dark mb-0" type="submit" onclick="checker(event)" >Predict Emissions</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row" id="overviewContainer" style="display:none;">
+        <div class="col-12">
+          <div class="card mb-4">
+            <div class="card-header pb-0">
+              <div class="row align-items-center">
+                <div style="text-align: center; margin-bottom: 15px;">
+                  <h5 class="mb-0" id="title">Prediction Overview</h5>
+                </div>
+                <div class="text-end">
+                  <div class="dropdown ms-12">
+                    <button id="dropdownButton_year_overview" class="btn btn-lg text-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">{{ latest_year + 1 }}</button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                      <li><a class="dropdown-item" href="#" id="dataContainer1"></a></li>
+                    </ul>
+                  </div>
+                </div>                          
+              </div>
+            </div>            
+            <div class="card-body p-3">
+              <div class="row">
+                <div class="col-md-3 mb-3">
+                  <div class="card shadow">
+                    <div class="card-header mx-4 p-3 text-center">
+                      <div class="icon icon-shape icon-lg bg-gradient-primary shadow text-center border-radius-lg">
+                        <i class="fas fa-desktop opacity-10"></i>
+                      </div>
+                    </div>
+                    <div class="card-body pt-0 p-3 text-center">
+                      <h6 class="text-center mb-0">Total Predicted Units</h6>
+                      <p class="text-xs">
+                        <span class="font-weight-bold" id="amount_percentage"></span> increase percentage<br>
+                      </p>
+                      <hr class="horizontal dark my-3">
+                      <h5 class="text-primary mb-0" id="totalUnits"></h5>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card shadow">
+                    <div class="card-header mx-4 p-3 text-center">
+                      <div class="icon icon-shape icon-lg bg-gradient-info shadow text-center border-radius-lg">
+                        <i class="fas fa-bolt opacity-10"></i>
+                      </div>
+                    </div>
+                    <div class="card-body pt-0 p-3 text-center">
+                      <h6 class="text-center mb-0">Estimated Energy</h6>
+                      <p class="text-xs">
+                        <span class="font-weight-bold" id="energy_percentage"></span> increase percentage<br>
+                      </p>
+                      <hr class="horizontal dark my-3">
+                      <h6 class="text-primary mb-0" id="estimatedEnergy"></h6>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card shadow">
+                    <div class="card-header mx-4 p-3 text-center">
+                      <div class="icon icon-shape icon-lg bg-gradient-warning shadow text-center border-radius-lg">
+                        <i class="fas fa-money-bill opacity-10"></i>
+                      </div>
+                    </div>
+                    <div class="card-body pt-0 p-3 text-center">
+                      <h6 class="text-center mb-0">Estimated Cost</h6>
+                      <p class="text-xs">
+                        <span class="font-weight-bold" id="cost_percentage"></span> increase percentage<br>
+                      </p>
+                      <hr class="horizontal dark my-3">
+                      <h6 class="text-primary mb-0" id="estimatedCost"></h6>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card shadow">
+                    <div class="card-header mx-4 p-3 text-center">
+                      <div class="icon icon-shape icon-lg bg-gradient-success shadow text-center border-radius-lg">
+                        <i class="fas fa-leaf opacity-10"></i>
+                      </div>
+                    </div>
+                    <div class="card-body pt-0 p-3 text-center">
+                      <h6 class="text-center mb-0">Estimated Carbon</h6>
+                      <p class="text-xs">
+                        <span class="font-weight-bold" id="carbon_percentage"></span> increase percentage<br>
+                      </p>
+                      <hr class="horizontal dark my-3">
+                      <h6 class="text-primary mb-0" id="estimatedCarbon"></h6>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row" id="specificationContainer" style="display:none;">
+                <div class="col-12 mb-3">
+                  <div class="row">
+                    <div class="col-xl-3 col-md-6 mb-xl-0 mb-4">
+                      <div class="card card-blog card-plain shadow p-3">
+                        <div class="card-body px-1 pb-0">
+                          <h5>Units Predicted</h5>
+                          <p class="text-sm font-weight-bold"> Highest Procurement <br>
+                            <span class="text-danger font-weight-bold" id="highest_cat1"></span>
+                          </p>
+                          <p class="text-xs" id="spec1"></p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-xl-0 mb-4">
+                      <div class="card card-blog card-plain shadow p-3">
+                        <div class="card-body px-1 pb-0">
+                          <h5>Energy Estimated</h5>
+                          <p class="text-sm font-weight-bold"> Highest Consumption <br>
+                            <span class="text-danger font-weight-bold" id="highest_cat2"></span>
+                          </p>
+                          <p class="text-xs" id="spec2"></p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-xl-0 mb-4">
+                      <div class="card card-blog card-plain shadow p-3">
+                        <div class="card-body px-1 pb-0">
+                          <h5>Cost Estimated</h5>
+                          <p class="text-sm font-weight-bold"> Highest Spend <br>
+                            <span class="text-danger font-weight-bold" id="highest_cat3"></span>
+                          </p>
+                          <p class="text-xs" id="spec3"></p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-xl-0 mb-4">
+                      <div class="card card-blog card-plain shadow p-3">
+                        <div class="card-body px-1 pb-0">
+                          <h5>Emission Estimated</h5>
+                          <p class="text-sm font-weight-bold"> Highest Emission <br>
+                            <span class="text-danger font-weight-bold" id="highest_cat4"></span>
+                          </p>
+                          <p class="text-xs" id="spec4"></p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row" id="initiativeContainer">
+                <div class="col-lg-7 mb-lg-0 mb-4">
+                  <div class="card shadow">
+                    <div class="card-header pb-0 px-3">
+                      <h6 class="mb-0" id="titleInitiatives"></h6>
+                    </div>
+                    <div class="card-body p-3">
+                      <div class="row">
+                        <div class="col-md-4 mb-3">
+                          <div class="card shadow">
+                            <div class="card-body pt-0 p-2 mt-3 text-center">
+                              <h5 class="text-success mb-0" id="alternatives1"></h5>
+                              <hr class="horizontal dark my-3">
+                              <p class="text-xs text-primary" id="desc_alternative1"></p>
+                              <hr class="horizontal dark my-3">
+                              <p class="text-xs mb-0">Unit for Initiatives: <span class="text-dark font-weight-bold" id="initiatives_unit_alternative1"></span></p>
+                              <p class="text-xs mb-0">Unit to be Disposed: <span class="text-dark font-weight-bold" id="disposed_alternative1"></span></p>
+                              <p class="text-xs">Unit to be Procured: <span class="text-dark font-weight-bold" id="procured_alternative1"></span></p>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                          <div class="card shadow">
+                            <div class="card-body pt-0 p-2 mt-3 text-center">
+                              <h5 class="text-info mb-0" id="alternatives2"></h5>
+                              <hr class="horizontal dark my-3">
+                              <p class="text-xs text-primary" id="desc_alternative2"></p>
+                              <hr class="horizontal dark my-3">
+                              <p class="text-xs mb-0">Unit for Initiatives: <span class="text-dark font-weight-bold" id="initiatives_unit_alternative2"></span></p>
+                              <p class="text-xs mb-0">Unit to be Disposed: <span class="text-dark font-weight-bold" id="disposed_alternative2"></span></p>
+                              <p class="text-xs">Unit to be Procured: <span class="text-dark font-weight-bold" id="procured_alternative2"></span></p>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                          <div class="card shadow">
+                            <div class="card-body pt-0 p-2 mt-3 text-center">
+                              <h5 class="text-warning mb-0" id="alternatives3"></h5>
+                              <hr class="horizontal dark my-3">
+                              <p class="text-xs text-primary" id="desc_alternative3"></p>
+                              <hr class="horizontal dark my-3">
+                              <p class="text-xs mb-0">Unit for Initiatives: <span class="text-dark font-weight-bold" id="initiatives_unit_alternative3"></span></p>
+                              <p class="text-xs mb-0">Unit to be Disposed: <span class="text-dark font-weight-bold" id="disposed_alternative3"></span></p>
+                              <p class="text-xs">Unit to be Procured: <span class="text-dark font-weight-bold" id="procured_alternative3"></span></p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-5 mb-lg-0 mb-4">
+                  <div class="card h-100 mb-0 shadow">
+                    <div class="card-header pb-0 px-3">
+                      <div class="row">
+                        <div class="col-md-6">
+                          <h6 class="mb-0">Practices</h6>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="card-body pt-2 ms-3 me-3 p-0">
+                      <div class="card shadow p-2 mb-3" style="background-color: rgba(46, 204, 113, 0.08);">
+                        <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
+                          <div class="d-flex flex-column ms-2">
+                            <h6 class="mb-1 text-primary text-sm" id="initative1"></h6>
+                            <span class="text-xs text-dark" id="practice1"></span>
+                          </div>
+                        </li>
+                      </div>
+                      <div class="card shadow p-2 mb-3" style="background-color: rgba(52, 152, 219, 0.08);">
+                        <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
+                          <div class="d-flex flex-column ms-2">
+                            <h6 class="mb-1 text-primary text-sm" id="initative2"></h6>
+                            <span class="text-xs text-dark" id="practice2"></span>
+                          </div>
+                        </li>
+                      </div>
+                      <div class="card shadow p-2 mb-3" style="background-color: rgba(230, 126, 34, 0.08);">
+                        <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
+                          <div class="d-flex flex-column ms-2">
+                            <h6 class="mb-1 text-primary text-sm" id="initative3"></h6>
+                            <span class="text-xs text-dark" id="practice3"></span>
+                          </div>
+                        </li>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row" id="chartContainer" style="display:none;">
+        <div class="col-12">
+          <div class="card mb-4"> 
+            <div class="card-header pb-0">
+              <div style="text-align: center;">
+                <h5>Prediction Chart</h5>
+              </div>
+              <div class="row">
+                <div class="col-lg-6">
+                  <div class="card z-index-2 mb-4">
+                    <div class="card-body p-3"> 
+                      <div class="border-radius-lg py-3 pe-1 mb-0">
+                        <div class="d-flex justify-content-start align-items-center">
+                          <h6 class="mb-3">Unit Procured Prediction Chart</h5>
+                        </div>
+                        <div class="chart">
+                          <canvas id="chart-line1" class="chart-canvas" height="250"></canvas>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-6">
+                  <div class="card z-index-2 mb-4">
+                    <div class="card-body p-3"> 
+                      <div class="border-radius-lg py-3 pe-1 mb-0">
+                        <div class="d-flex justify-content-start align-items-center">
+                          <h6 class="mb-3">Energy Taken Prediction Chart</h5>
+                        </div>
+                        <div class="chart">
+                          <canvas id="chart-line2" class="chart-canvas" height="250"></canvas>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-lg-6">
+                  <div class="card z-index-2 mb-4">
+                    <div class="card-body p-3"> 
+                      <div class="border-radius-lg py-3 pe-1 mb-0">
+                        <div class="d-flex justify-content-start align-items-center">
+                          <h6 class="mb-3">Cost Spent Prediction Chart</h5>
+                        </div>
+                        <div class="chart">
+                          <canvas id="chart-line3" class="chart-canvas" height="250"></canvas>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-6">
+                  <div class="card z-index-2 mb-4">
+                    <div class="card-body p-3"> 
+                      <div class="border-radius-lg py-3 pe-1 mb-0">
+                        <div class="d-flex justify-content-start align-items-center">
+                          <h6 class="mb-3">Carbon Emission Prediction Chart</h5>
+                        </div>
+                        <div class="chart">
+                          <canvas id="chart-line4" class="chart-canvas" height="250"></canvas>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row" id="tableDataContainer" style="display:none;">
+        <div class="col-12">
+          <div class="card mb-4">
+            <div class="card-header pb-0" style="text-align: center;">
+              <h5>Prediction Result Data</h5>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+              <div class="table-responsive p-0">
+                <table class="table align-items-center justify-content-center mb-0" id="prediction_table">
+                  <thead>
+                    <tr>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">Year</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">Category</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">Subcategory</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">Units Predicted</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">Energy Estimation/Year</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">Cost Estimation/Year</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">Carbon Estimation/Year</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    {% include "includes/footer.html" %}
+
+  </div>
+
+  <div class="modal" id="loadingModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Loading...</h5>
+        </div>
+        <div class="modal-body">
+          <p>Please wait while the prediction is being processed.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+        
+      
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="{{ config.ASSETS_ROOT }}/js/plugins/chartjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <script>
+    // Variabel yang digunakan
+    var latest_year = parseInt({{ latest_year }});
+    var assetCategoriesLength = {{ asset_categories_length }};
+    var title = document.getElementById("title");
+    var titleInitiatives = document.getElementById("titleInitiatives");
+    // Options
+    var categoryOption = document.getElementById("category_options");
+    var subcategoryOption = document.getElementById("sub_category_options");
+    var allOption = document.getElementById("all_options");
+    // Answer
+    var subCategoryGroup = document.getElementById("sub_category_group");
+    var categoryGroup = document.getElementById("category_group");
+    var years = document.getElementById("years");
+    // Card setiap elemen jawaban
+    var tableDataContainer = document.getElementById("tableDataContainer");
+    var overviewContainer = document.getElementById("overviewContainer");
+    var chartContainer = document.getElementById("chartContainer");
+    var specificationContainer = document.getElementById("specificationContainer");
+    
+    allOption.addEventListener("click", showElements);
+    categoryOption.addEventListener("click", showElements);
+    subcategoryOption.addEventListener("click", showElements);
+
+    // Function utama
+    // Function utama
+    // Function utama
+    // Function untuk menampilkan sesuai dengan pilihannya
+    function showElements() {
+      if (allOption.checked) {
+        subCategoryGroup.style.display = "none";
+        categoryGroup.style.display = "none";
+      } else if (!categoryOption.checked && !subcategoryOption.checked) {
+        subCategoryGroup.style.display = "block";
+        categoryGroup.style.display = "block";
+      } else if (categoryOption.checked && !subcategoryOption.checked) {
+        subCategoryGroup.style.display = "none";
+        categoryGroup.style.display = "block";
+      } else if (!categoryOption.checked && subcategoryOption.checked) {
+        subCategoryGroup.style.display = "block";
+        categoryGroup.style.display = "block";
+      } 
+    }
+    
+    // Function untuk menampilkan subcategories berdasarkan category
+    function getSubcategories(categorySelect) {
+      var category = categorySelect.value;
+      var subCategorySelect = document.getElementById('sub_category');
+      // Mengosongkan opsi saat ini
+      subCategorySelect.innerHTML = '<option selected disabled>Select IT Asset Subcategory</option>';
+      // Mengambil data dari server menggunakan AJAX
+      fetch('/sub_category/' + encodeURIComponent(category))
+        .then(response => response.json())
+        .then(data => {
+          var subCategories = data.sub_categories;
+          // Menambahkan opsi IT Asset Subcategory ke select element
+          for (var i = 0; i < subCategories.length; i++) {
+            var option = document.createElement('option');
+            option.text = subCategories[i];
+            subCategorySelect.add(option);
+          }
+        });
+    }
+
+    // Function checker
+    function checker(event) {
+      var category = document.getElementById("category").value;
+      var subcategory = document.getElementById("sub_category").value;
+      var yearsToPredict = document.getElementById("years").value;
+      
+      var isCategoryValid = category !== 'Select IT Asset Category';
+      var isSubcategoryValid = subcategory !== 'Select IT Asset Subcategory';
+      var isYearValid = yearsToPredict !== 'Select Years';
+      if (categoryOption.checked) {
+        if (!isYearValid || !isCategoryValid) {
+          event.preventDefault(); // Mencegah pengiriman formulir jika input tidak valid
+          alert('Silakan isi semua field yang diperlukan sebelum melakukan prediksi.');
+          return;
+        } else {
+          showLoadingModal(event);
+        }
+      } else if (subcategoryOption.checked) {
+        if (!isYearValid || !isCategoryValid || !isSubcategoryValid) {
+          event.preventDefault(); // Mencegah pengiriman formulir jika input tidak valid
+          alert('Silakan isi semua field yang diperlukan sebelum melakukan prediksi.');
+          return;
+        } else {
+          showLoadingModal(event);
+        }
+      } else {
+        if (!isYearValid) {
+          event.preventDefault(); // Mencegah pengiriman formulir jika input tidak valid
+          alert('Silakan isi semua field yang diperlukan sebelum melakukan prediksi.');
+          return;
+        } else {
+          showLoadingModal(event);
+        }
+      }
+    }
+
+    // Function untuk loading modal
+    function showLoadingModal(event) {
+      event.preventDefault();
+      var loadingModal = document.getElementById("loadingModal");
+      loadingModal.style.display = "block";
+  
+      // Perform prediction after a brief delay
+      setTimeout(performPrediction, 500);
+    }
+
+    // Function untuk sorting berdasarkan tahun dan category
+    function sortPredictionOverview(predictionOverview) {
+      predictionOverview.sort(function(a, b) {
+        var yearA = a[0];
+        var yearB = b[0];
+        var categoryA = a[1];
+        var categoryB = b[1];
+    
+        // Sort berdasarkan tahun
+        if (yearA < yearB) {
+          return -1;
+        }
+        if (yearA > yearB) {
+          return 1;
+        }
+    
+        // Jika tahun sama, sort berdasarkan kategori
+        if (categoryA < categoryB) {
+          return -1;
+        }
+        if (categoryA > categoryB) {
+          return 1;
+        }
+    
+        return 0;
+      });
+    
+      return predictionOverview;
+    }
+    
+
+    // Function untuk menjalankan fungsi prediksi
+    function performPrediction() {
+      // Category
+      if (categoryOption.checked) {
+        var category = document.getElementById("category").value;
+      } else {
+        var category = ""
+      }
+      // Subcategory
+      if (subcategoryOption.checked) {
+        var subcategory = document.getElementById("sub_category").value;
+      } else {
+        var subcategory = ""
+      }
+      // Year to predict
+      var yearsToPredict = document.getElementById("years").value;
+
+      
+      // Prepare data to be sent via AJAX
+      var data = {
+        category: category,
+        subcategory: subcategory,
+        yearsToPredict: yearsToPredict
+      };
+  
+      // Send AJAX request to the server
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", "/predict_operations", true);
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          // Request completed successfully
+          var response = JSON.parse(xhr.responseText);
+          
+          // Process the response data as needed
+          result = response.result;
+          years_to_predict = response.years_to_predict;
+          if (allOption.checked) {
+            data_predictions = predictionsGroupByYear(result);
+            data_prediction_specifications = predictionsGroupByYearAndCategory(result);
+            dropdownButton_year_overview_specification(latest_year + 1, data_prediction_specifications);
+            title.innerHTML = "";
+            title.innerHTML = "Prediction Overview of <span class='text-primary font-weight-bold'>All Data<\span>";
+          } else if (categoryOption.checked) {
+            specificationContainer.style.display = "none";
+            data = sliceByCategory(result, category);
+            data_predictions = predictionsGroupByYear(data);
+            data_prediction_specifications = "";
+            title.innerHTML = "";
+            title.innerHTML = "Prediction Overview of Category <span class='text-primary font-weight-bold'>" + category + "<\span>";
+          } else if (subcategoryOption.checked) {
+            specificationContainer.style.display = "none";
+            data = sliceBySubcategory(result, subcategory);
+            data_predictions = predictionsGroupByYear(data);
+            data_prediction_specifications = "";
+            title.innerHTML = "";
+            title.innerHTML = "Prediction Overview of Subcategory <span class='text-primary font-weight-bold'>" + subcategory + "<\span>";
+          } 
+          // Menampilkan overview
+          dropdownButton_year_overview(latest_year + 1, data_predictions);
+          update_button_year_overview(data_predictions, data_prediction_specifications, years_to_predict);
+          // Menampilkan initiatives
+          var predict_year = years_to_predict + latest_year;
+          titleInitiatives.innerHTML = "";
+          titleInitiatives.innerHTML = "General Initiative Alternatives for " + predict_year;
+          for (var i = 1; i <= 3; i++) {
+            var alternativeId = `alternatives${i}`;
+            var descAlternativeId = `desc_alternative${i}`;
+            var initiativesUnitAlternativeId = `initiatives_unit_alternative${i}`;
+            var disposedAlternativeId = `disposed_alternative${i}`;
+            var procuredAlternativeId = `procured_alternative${i}`;
+            var initativeId = `initative${i}`;
+            var practiceId = `practice${i}`;
+          
+            document.getElementById(alternativeId).innerText = response.initiatives[i - 1];
+            document.getElementById(descAlternativeId).innerText = response.description[i - 1];
+            document.getElementById(initiativesUnitAlternativeId).innerText = response.units[i - 1];
+            document.getElementById(disposedAlternativeId).innerText = response.disposed[i - 1];
+            document.getElementById(procuredAlternativeId).innerText = response.procured[i - 1];
+            document.getElementById(initativeId).innerText = response.initiatives[i - 1];
+            document.getElementById(practiceId).innerText = response.practices[i - 1];
+          }          
+          // Menampilkan diagram
+          if (window.myChart1) {
+            window.myChart1.destroy();
+          }
+          if (window.myChart2) {
+            window.myChart2.destroy();
+          }
+          if (window.myChart3) {
+            window.myChart3.destroy();
+          }
+          if (window.myChart4) {
+            window.myChart4.destroy();
+          }
+          data_line1 = data_predictions;
+          var ctx1 = document.getElementById("chart-line1").getContext("2d");
+          var ctx2 = document.getElementById("chart-line2").getContext("2d");
+          var ctx3 = document.getElementById("chart-line3").getContext("2d");
+          var ctx4 = document.getElementById("chart-line4").getContext("2d");
+          window.myChart1 = updateChart1(data_line1, ctx1, 1, " ribu unit", years_to_predict);
+          window.myChart2 = updateChart1(data_line1, ctx2, 2, " mWh", years_to_predict);
+          window.myChart3 = updateChart1(data_line1, ctx3, 3, " juta", years_to_predict);
+          window.myChart4 = updateChart1(data_line1, ctx4, 4, " tonCO2", years_to_predict);
+          // Menampilkan Tabel
+          addPredictionData(sortPredictionOverview(response.prediction_overview));  
+          // Hide loading modal
+          var loadingModal = document.getElementById("loadingModal");
+          loadingModal.style.display = "none";
+          // Reset categoryStatus and subcategoryStatus to false
+        }
+      };
+      xhr.send(JSON.stringify(data));
+    }
+
+
+
+    // Function untuk data view
+    // Function untuk data view
+    // Function untuk data view
+    // Function untuk menambahkan data hasil prediksi dalam bentuk tabel
+    function addPredictionData(data) {
+      tableDataContainer.style.display = "block";
+      // Mendapatkan tabel dan row hasil
+      var tableBody = document.getElementById("prediction_table").getElementsByTagName("tbody")[0];
+      tableBody.innerHTML = "";
+      for (var i in data) {
+        var newRow = document.createElement('tr');
+        // Membuat elemen sel untuk year
+        var yearCell = document.createElement('td');
+        yearCell.innerHTML = '<span class="text-sm font-weight-bold ms-2">' + data[i][0] + '</span>';
+        // Membuat elemen sel untuk IT Asset Categories
+        var categoryCell = document.createElement('td');
+        categoryCell.innerHTML = '<span class="text-sm font-weight-bold">' + data[i][1] + '</span>';
+        // Membuat elemen sel untuk IT Asset Subcategories
+        var subCategoryCell = document.createElement('td');
+        subCategoryCell.innerHTML = '<span class="text-sm font-weight-bold">' + data[i][2] + '</span>';
+        // Membuat elemen sel untuk Amounts
+        var amountCell = document.createElement('td');
+        var amountFormatted = (parseInt(data[i][3])).toLocaleString();
+        amountCell.innerHTML = '<div class="d-flex px-2"><div class="my-auto"><h6 class="text-sm">' + amountFormatted + '</h6></div></div>';
+        // Membuat elemen sel untuk Total Energy
+        var totalEnergyCell = document.createElement('td');
+        var energyFormatted = (parseFloat(data[i][4])).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        totalEnergyCell.innerHTML = '<span class="text-sm font-weight-bold">' + energyFormatted + ' kWh</span>';
+        // Membuat elemen sel untuk Total Cost
+        var totalCostCell = document.createElement('td');
+        var costFormatted = (parseFloat(data[i][5])).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        totalCostCell.innerHTML = '<span class="text-sm font-weight-bold">Rp ' + costFormatted + '</span>';
+        // Membuat elemen sel untuk Total Carbon
+        var totalCarbonCell = document.createElement('td');
+        var carbonFormatted = (parseFloat(data[i][6])).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        totalCarbonCell.innerHTML = '<span class="text-sm font-weight-bold">' + carbonFormatted + ' kgCO2</span>';
+  
+        
+        // Menambahkan sel-sel ke dalam baris
+        newRow.appendChild(yearCell);
+        newRow.appendChild(categoryCell);
+        newRow.appendChild(subCategoryCell);
+        newRow.appendChild(amountCell);
+        newRow.appendChild(totalEnergyCell);
+        newRow.appendChild(totalCostCell);
+        newRow.appendChild(totalCarbonCell);
+        tableBody.appendChild(newRow);
+      }
+      // Reset the form
+      document.querySelector('form').reset();
+      subCategoryGroup.style.display = "none";
+      categoryGroup.style.display = "none";
+    }
+
+
+
+    // Function untuk overview
+    // Function untuk overview
+    // Function untuk overview
+    // Function untuk update button overview
+    function update_button_year_overview(data, specification, years) {
+      var container1 = document.getElementById('dataContainer1');
+      container1.innerHTML = '';
+      var year = latest_year;
+      for (var i = 0; i < years; i++) {
+        year += 1;
+
+        var dropdownItem = document.createElement('a');
+        dropdownItem.classList.add('dropdown-item');
+        dropdownItem.href = '#';
+        dropdownItem.id = 'dataContainer1_' + i;
+        dropdownItem.textContent = year;
+        dropdownItem.addEventListener('click', function() {
+          if (specification === "") {
+            dropdownButton_year_overview(this.textContent, data);
+          } else {
+            dropdownButton_year_overview(this.textContent, data);
+            dropdownButton_year_overview_specification(this.textContent, specification);
+          } 
+        });
+
+        var listItem = document.createElement('li');
+        listItem.appendChild(dropdownItem);
+        container1.appendChild(listItem);
+      }
+    }
+
+    // Function untuk mengubah data rincian overview
+    function dropdownButton_year_overview_specification(selectedYear, predictions) {
+      document.getElementById('dropdownButton_year_overview').textContent = selectedYear;
+      // Mendapatkan indeks data berdasarkan selectedYear
+      for (var i in predictions) {
+        if (predictions[i][0] === parseInt(selectedYear)) {
+          var startIndex = i;
+          break; // Keluar dari loop saat kondisi terpenuhi
+        } 
+      }
+
+      var specText1 = "";
+      var specText2 = "";
+      var specText3 = "";
+      var specText4 = "";
+      var highestUnit = 0;
+      var highestEnergy = 0;
+      var highestCost = 0;
+      var highestCarbon = 0;
+      var categoryWithHighestUnit = '';
+      var categoryWithHighestEnergy = '';
+      var categoryWithHighestCost = '';
+      var categoryWithHighestCarbon = '';
+
+      for (var i = 0; i < assetCategoriesLength; i++) {
+        var dataIndex = parseInt(startIndex) + i;
+        var unit = parseInt(predictions[dataIndex][2]);
+        var energy = parseFloat(predictions[dataIndex][3]);
+        var cost = parseFloat(predictions[dataIndex][4]);
+        var carbon = parseFloat(predictions[dataIndex][5]);
+
+        if (unit > highestUnit) {
+          highestUnit = unit;
+          categoryWithHighestUnit = predictions[dataIndex][1];
+        }
+        if (energy > highestEnergy) {
+          highestEnergy = energy;
+          categoryWithHighestEnergy = predictions[dataIndex][1];
+        }
+        if (cost > highestCost) {
+          highestCost = cost;
+          categoryWithHighestCost = predictions[dataIndex][1];
+        }
+        if (carbon > highestCarbon) {
+          highestCarbon = carbon;
+          categoryWithHighestCarbon = predictions[dataIndex][1];
+        }
+
+        var cat = predictions[dataIndex][1];
+        if (cat === "Pemrosesan Gambar") {
+          cat = "Imaging";
+        }
+
+        specText1 += "<span class='font-weight-bold'>" + cat + "</span>: " + unit.toLocaleString() + "<br>";
+        specText2 += "<span class='font-weight-bold'>" + cat + "</span>: " + energy.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " kWh<br>";
+        specText3 += "<span class='font-weight-bold'>" + cat + "</span>: Rp " + cost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "<br>";
+        specText4 += "<span class='font-weight-bold'>" + cat + "</span>: " + carbon.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " kgCO2<br>";
+      }
+      var specElement1 = document.getElementById("spec1");
+      var specElement2 = document.getElementById("spec2");
+      var specElement3 = document.getElementById("spec3");
+      var specElement4 = document.getElementById("spec4");
+      specElement1.innerHTML = specText1;
+      specElement2.innerHTML = specText2;
+      specElement3.innerHTML = specText3;
+      specElement4.innerHTML = specText4;
+
+      var highestElement1 = document.getElementById("highest_cat1");
+      var highestElement2 = document.getElementById("highest_cat2");
+      var highestElement3 = document.getElementById("highest_cat3");
+      var highestElement4 = document.getElementById("highest_cat4");
+      highestElement1.innerHTML = categoryWithHighestUnit;
+      highestElement2.innerHTML = categoryWithHighestEnergy;
+      highestElement3.innerHTML = categoryWithHighestCost;
+      highestElement4.innerHTML = categoryWithHighestCarbon;
+      specificationContainer.style.display = "block";      
+    }
+
+    // Function untuk mengubah year selected    
+    function dropdownButton_year_overview(selectedYear, predictions) {
+      document.getElementById('dropdownButton_year_overview').textContent = selectedYear;      
+      // Mendapatkan indeks data berdasarkan selectedYear
+      for (var i in predictions) {
+        if (predictions[i][0] === parseInt(selectedYear)) {
+          var dataIndex = i;
+          break; // Keluar dari loop saat kondisi terpenuhi
+        } 
+      }
+      // Memperbarui nilai pada elemen HTML berdasarkan data yang dipilih
+      var amountPercentage = parseFloat(predictions[dataIndex][5]);
+      var energyPercentage = parseFloat(predictions[dataIndex][6]);
+      var costPercentage = parseFloat(predictions[dataIndex][7]);
+      var carbonPercentage = parseFloat(predictions[dataIndex][8]);
+
+      document.getElementById('totalUnits').textContent = parseInt(predictions[dataIndex][1]).toLocaleString();
+      document.getElementById('estimatedEnergy').textContent = parseFloat(predictions[dataIndex][2]).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " kWh";
+      document.getElementById('estimatedCost').textContent = "Rp " + parseFloat(predictions[dataIndex][3]).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "";
+      document.getElementById('estimatedCarbon').textContent = parseFloat(predictions[dataIndex][4]).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " KgCO2";
+
+      var amountPercentageElement = document.getElementById('amount_percentage');
+      var energyPercentageElement = document.getElementById('energy_percentage');
+      var costPercentageElement = document.getElementById('cost_percentage');
+      var carbonPercentageElement = document.getElementById('carbon_percentage');
+      amountPercentageElement.textContent = Math.abs(amountPercentage).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " %";
+      energyPercentageElement.textContent = Math.abs(energyPercentage).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " %";
+      costPercentageElement.textContent = Math.abs(costPercentage).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " %";
+      carbonPercentageElement.textContent = Math.abs(carbonPercentage).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " %";
+
+      if (amountPercentage > 10) {
+        amountPercentageElement.innerHTML = '<i class="fa fa-arrow-up text-danger" aria-hidden="true" id="arrowIcon"></i> ' + amountPercentageElement.textContent;
+      } else if (amountPercentage > 5) {
+        amountPercentageElement.innerHTML = '<i class="fa fa-arrow-up text-warning" aria-hidden="true" id="arrowIcon"></i> ' + amountPercentageElement.textContent;
+      } else if (amountPercentage > 0) {
+        amountPercentageElement.innerHTML = '<i class="fa fa-arrow-up text-info" aria-hidden="true" id="arrowIcon"></i> ' + amountPercentageElement.textContent;
+      } else {
+        amountPercentageElement.innerHTML = '<i class="fa fa-arrow-down text-success" aria-hidden="true" id="arrowIcon"></i> ' + amountPercentageElement.textContent;
+      }
+
+      if (energyPercentage > 10) {
+        energyPercentageElement.innerHTML = '<i class="fa fa-arrow-up text-danger" aria-hidden="true" id="arrowIcon"></i> ' + energyPercentageElement.textContent;
+      } else if (energyPercentage > 5) {
+        energyPercentageElement.innerHTML = '<i class="fa fa-arrow-up text-warning" aria-hidden="true" id="arrowIcon"></i> ' + energyPercentageElement.textContent;
+      } else if (energyPercentage > 0) {
+        energyPercentageElement.innerHTML = '<i class="fa fa-arrow-up text-info" aria-hidden="true" id="arrowIcon"></i> ' + energyPercentageElement.textContent;
+      } else {
+        energyPercentageElement.innerHTML = '<i class="fa fa-arrow-down text-success" aria-hidden="true" id="arrowIcon"></i> ' + energyPercentageElement.textContent;
+      }
+
+      if (costPercentage > 10) {
+        costPercentageElement.innerHTML = '<i class="fa fa-arrow-up text-danger" aria-hidden="true" id="arrowIcon"></i> ' + costPercentageElement.textContent;
+      } else if (costPercentage > 5) {
+        costPercentageElement.innerHTML = '<i class="fa fa-arrow-up text-warning" aria-hidden="true" id="arrowIcon"></i> ' + costPercentageElement.textContent;
+      } else if (costPercentage > 0) {
+        costPercentageElement.innerHTML = '<i class="fa fa-arrow-up text-info" aria-hidden="true" id="arrowIcon"></i> ' + costPercentageElement.textContent;
+      } else {
+        costPercentageElement.innerHTML = '<i class="fa fa-arrow-down text-success" aria-hidden="true" id="arrowIcon"></i> ' + costPercentageElement.textContent;
+      }
+
+      if (carbonPercentage > 10) {
+        carbonPercentageElement.innerHTML = '<i class="fa fa-arrow-up text-danger" aria-hidden="true" id="arrowIcon"></i> ' + carbonPercentageElement.textContent;
+      } else if (carbonPercentage > 5) {
+        carbonPercentageElement.innerHTML = '<i class="fa fa-arrow-up text-warning" aria-hidden="true" id="arrowIcon"></i> ' + carbonPercentageElement.textContent;
+      } else if (carbonPercentage > 0) {
+        carbonPercentageElement.innerHTML = '<i class="fa fa-arrow-up text-info" aria-hidden="true" id="arrowIcon"></i> ' + carbonPercentageElement.textContent;
+      } else {
+        carbonPercentageElement.innerHTML = '<i class="fa fa-arrow-down text-success" aria-hidden="true" id="arrowIcon"></i> ' + carbonPercentageElement.textContent;
+      }
+      
+      overviewContainer.style.display = "block";
+    }
+
+    // Function slicing by subcategory
+    function sliceBySubcategory(data, subcategory) {
+      var result = [];
+    
+      for (var i = 0; i < data.length; i++) {
+        if (data[i][2] === subcategory) {
+          result.push(data[i]);
+        }
+      }
+      return result;
+    }
+
+    // Function slicing by category
+    function sliceByCategory(data, category) {
+      var result = [];
+    
+      for (var i = 0; i < data.length; i++) {
+        if (data[i][1] === category) {
+          result.push(data[i]);
+        }
+      }
+      return result;
+    }
+
+    // Function untuk mengembalikkan total prediksi dikelompokkan berdasarkan tahun
+    function predictionsGroupByYear(predictions) {
+      var result = [];
+      for (var i = 0; i < predictions.length; i++) {
+        var year = predictions[i][0];
+        var unit = parseInt(predictions[i][6]);
+        var energy = parseFloat(predictions[i][3]);
+        var cost = parseFloat(predictions[i][4]);
+        var carbon = parseFloat(predictions[i][5]);
+
+        var existingYearIndex = -1;
+        for (var j = 0; j < result.length; j++) {
+          if (result[j][0] === year) {
+            existingYearIndex = j;
+            break;
+          }
+        }
+
+        if (existingYearIndex !== -1) {
+          result[existingYearIndex][1] += unit;
+          result[existingYearIndex][2] += energy;
+          result[existingYearIndex][3] += cost;
+          result[existingYearIndex][4] += carbon;
+        } else {
+          result.push([year, unit, energy, cost, carbon]);
+        }
+      }
+      // Calculate unit, energy, cost, and carbon rate
+      for (var k = 1; k < result.length; k++) {
+        var initialUnit = result[k - 1][1];
+        var initialEnergy = result[k - 1][2];
+        var initialCost = result[k - 1][3];
+        var initialCarbon = result[k - 1][4];
+        var finalUnit = result[k][1];
+        var finalEnergy = result[k][2];
+        var finalCost = result[k][3];
+        var finalCarbon = result[k][4];
+        var unitRate = 0;
+        var energyRate = 0;
+        var costRate = 0;
+        var carbonRate = 0;
+        if (initialUnit !== 0) {
+          unitRate = ((finalUnit - initialUnit) / initialUnit) * 100;
+        }
+        if (initialEnergy !== 0) {
+          energyRate = ((finalEnergy - initialEnergy) / initialEnergy) * 100;
+        }
+        if (initialCost !== 0) {
+          costRate = ((finalCost - initialCost) / initialCost) * 100;
+        }
+        if (initialCarbon !== 0) {
+          carbonRate = ((finalCarbon - initialCarbon) / initialCarbon) * 100;
+        }
+        result[k].push(unitRate);
+        result[k].push(energyRate);
+        result[k].push(costRate);
+        result[k].push(carbonRate);
+      }
+
+      return result;
+    }
+
+    // Function untuk mengembalikkan total prediksi dikelompokkan berdasarkan tahun dan category
+    function predictionsGroupByYearAndCategory(predictions) {
+      var result = [];
+      for (var i = 0; i < predictions.length; i++) {
+        var year = predictions[i][0];
+        var category = predictions[i][1];
+        var unit = parseInt(predictions[i][6]);
+        var energy = parseFloat(predictions[i][3]);
+        var cost = parseFloat(predictions[i][4]);
+        var carbon = parseFloat(predictions[i][5]);
+    
+        var existingYearCategoryIndex = -1;
+        for (var j = 0; j < result.length; j++) {
+          if (result[j][0] === year && result[j][1] === category) {
+            existingYearCategoryIndex = j;
+            break;
+          }
+        }
+    
+        if (existingYearCategoryIndex !== -1) {
+          result[existingYearCategoryIndex][2] += unit;
+          result[existingYearCategoryIndex][3] += energy;
+          result[existingYearCategoryIndex][4] += cost;
+          result[existingYearCategoryIndex][5] += carbon;
+        } else {
+          result.push([year, category, unit, energy, cost, carbon]);
+        }
+      }
+      
+      // Calculate unit, energy, cost, and carbon rate
+      for (var k = 1; k < result.length; k++) {
+        var initialUnit = result[k - 1][2];
+        var initialEnergy = result[k - 1][3];
+        var initialCost = result[k - 1][4];
+        var initialCarbon = result[k - 1][5];
+        var finalUnit = result[k][2];
+        var finalEnergy = result[k][3];
+        var finalCost = result[k][4];
+        var finalCarbon = result[k][5];
+        var unitRate = 0;
+        var energyRate = 0;
+        var costRate = 0;
+        var carbonRate = 0;
+        
+        if (initialUnit !== 0) {
+          unitRate = ((finalUnit - initialUnit) / initialUnit) * 100;
+        }
+        if (initialEnergy !== 0) {
+          energyRate = ((finalEnergy - initialEnergy) / initialEnergy) * 100;
+        }
+        if (initialCost !== 0) {
+          costRate = ((finalCost - initialCost) / initialCost) * 100;
+        }
+        if (initialCarbon !== 0) {
+          carbonRate = ((finalCarbon - initialCarbon) / initialCarbon) * 100;
+        }
+        
+        result[k].push(unitRate);
+        result[k].push(energyRate);
+        result[k].push(costRate);
+        result[k].push(carbonRate);
+      }
+    
+      return result;
+    }
+    
+
+
+
+    // Function untuk chart view
+    // Function untuk chart view
+    // Function untuk chart view
+    // Fucntion pembuatan chart 1
+    function updateChart1(result, ctx, id_elements, units, years_to_predict) {
+      chartContainer.style.display = "block";
+      // Membagi chart menjadi actual dan predicted
+      var actualData = result.slice(0, (result.length - years_to_predict));
+      var predictedData = result.slice((result.length - years_to_predict) - 1);
+      var data = [actualData, predictedData];
+      var label_name = ['Actual Data', 'Predicted Data'];
+    
+      var uniqueYears = [];
+      for (var i = 0; i < result.length; i++) {
+        var item = result[i][0];
+        uniqueYears.push(item);
+      }
+          
+      // Gradient Warna
+      var gradientStroke1 = ctx.createLinearGradient(0, 230, 0, 50);
+      gradientStroke1.addColorStop(1, 'rgba(210, 0, 0, 0.2)'); 
+      gradientStroke1.addColorStop(0.2, 'rgba(72, 72, 176, 0.1)');
+      gradientStroke1.addColorStop(0, 'rgba(210, 0, 0, 0)'); // Red colors
+
+      var gradientStroke2 = ctx.createLinearGradient(0, 230, 0, 50);
+      gradientStroke2.addColorStop(1, 'rgba(19, 102, 216, 0.2)');
+      gradientStroke2.addColorStop(0.2, 'rgba(72, 72, 176, 0.1)');
+      gradientStroke2.addColorStop(0, 'rgba(19, 102, 216, 0)'); // Blue colors
+
+      var gradients = [gradientStroke1, gradientStroke2];
+      var colorScheme = ["#D20000", "#1366D8"]; // Red and blue
+
+      var datasets = [];
+      for (var j = 0; j < data.length; j++) {
+        var counts = [];    
+        if (j === 1) {
+          // Mengabaikan data pada index 0 sampai (result.length - years_to_predict - 1)
+          counts = Array(result.length - years_to_predict - 1).fill(null);
+          counts = counts.concat(data[j].map(item => item[id_elements]));
+        } else {
+          counts = data[j].map(item => item[id_elements]);
+        }
+    
+        var dataset = {
+          label: label_name[j],
+          type: "line",
+          tension: 0.4,
+          borderWidth: 0,
+          pointRadius: 0,
+          borderColor: colorScheme[j],
+          backgroundColor: gradients[j],
+          fill: true,
+          borderWidth: 3,
+          maxBarThickness: 6,
+          data: counts,
+        };
+        datasets.push(dataset);
+      }
+
+      return new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: uniqueYears,
+          datasets: datasets,
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              align: 'middle',
+              position: 'bottom',
+              labels: {
+                boxWidth: 10,
+                boxHeight: 10,
+              }
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index',
+          },
+          scales: {
+            y: {
+              grid: {
+                drawBorder: false,
+                display: true,
+                drawOnChartArea: true,
+                drawTicks: false,
+              },
+              ticks: {
+                suggestedMin: 0,
+                suggestedMax: 500,
+                beginAtZero: true,
+                padding: 15,
+                display: true,
+                padding: 10,
+                color: '#000000',
+                font: {
+                  size: 11,
+                  family: "Open Sans",
+                  style: 'normal',
+                  lineHeight: 2
+                },
+                callback: function (value) {
+                  return (value/1000).toLocaleString() + units;
+                }
+              },
+            },
+            x: {
+              grid: {
+                drawBorder: false,
+                display: false,
+                drawOnChartArea: false,
+                drawTicks: false
+              },
+              ticks: {
+                display: true,
+                color: "#000000",
+                font: {
+                  size: 11,
+                  family: "Open Sans",
+                  style: 'normal',
+                  lineHeight: 2
+                }
+              },
+            },
+          },
+        },
+      });
+    }
+    
+  </script>
+
+{% endblock javascripts %}

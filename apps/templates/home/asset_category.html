@@ -1,0 +1,256 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Asset Category {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}
+{% endblock stylesheets %}
+
+{% block content %}
+
+    <div class="container-fluid py-4">
+      <div class="row">
+        <div class="col-12">
+          <div class="card mb-4">
+            <div class="card-header pb-0">
+              <div class="d-flex align-items-center">
+                <h6 class="me-2 flex-grow-1">Asset Category Table</h6>
+                <div class="d-flex nav-item dropdown">
+                  <a class="dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false"></a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="/asset_data">Asset Data</a></li>
+                    <li><a class="dropdown-item" href="/emissions">Asset Emissions</a></li>
+                    <li><a class="dropdown-item" href="/locations">Locations</a></li>
+                    <li><a class="dropdown-item" href="/emission_factors">Emissions Factors</a></li>
+                    <li><a class="dropdown-item" href="/asset_categories">Asset Category</a></li>
+                  </ul>
+                </div>
+                <div class="input-group mt-3 justify-content-end">
+                  <div class="row">
+                    <div class="col-auto">
+                    <form class="d-flex" method="POST" role="search">
+                      <div class="input-group">
+                          <select class="form-select form-select-sm text-body" id="searchBy" name="searchBy" aria-label="Search by" required>
+                            <option selected disabled>Select an option</option>
+                            <option value="kode_kategori">Asset Category Code</option>
+                            <option value="major_category_name">Major Category Name</option>
+                            <option value="category_name">Category Name</option>
+                            <option value="sub_category_name">Sub Category Name</option>
+                            <option value="asset_ef">Asset EF</option>
+                          </select>
+                          <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
+                          <input type="text" class="form-control w-15" id="searchText" name="searchText" placeholder="Type here..." required>
+                        </div>
+                      </div>
+                      <div class="col-auto">
+                          <button type="submit" class="btn bg-gradient-primary mb-0" id="searchButton">Search</button>
+                      </div>
+                    </form>
+                    <div class="col-auto">
+                      <a class="btn bg-gradient-dark mb-0" href="javascript:;" data-bs-toggle="modal" data-bs-target="#create_new_modal">
+                        <i class="fas fa-plus"></i>
+                        &nbsp;&nbsp;Add New Data
+                      </a>
+                    </div>
+                  </div>
+                </div>                               
+              </div>
+              <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                  <table class="table align-items-center justify-content-center mb-0">
+                    <thead>
+                      <tr>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Asset Category Code</th>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Major Category Name</th>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Category Name</th>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Sub Category Name</th>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Emission Factors/Year</th>
+                        <th></th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for category in asset_categories.items %}
+                        <tr>
+                          <td class="text-sm font-weight-bold mb-0 ms-2">{{ category.kode_kategori }}</td>
+                          <td class="text-sm font-weight-bold mb-0">{{ category.major_category_name }}</td>
+                          <td class="text-sm font-weight-bold mb-0">{{ category.category_name }}</td>
+                          <td class="text-sm font-weight-bold mb-0">{{ category.sub_category_name }}</td>
+                          <td class="text-sm font-weight-bold mb-0">{{ category.asset_ef }} kWh</td>
+                          <td class="align-middle">
+                            <a href="#" class="text-secondary font-weight-bold text-xs text-dark edit-btn" data-kode-kategory="{{ category.kode_kategori }}" data-major-category="{{ category.major_category_name }}" data-category="{{ category.category_name }}" data-sub-category="{{ category.sub_category_name }}" data-ef-aset="{{ category.asset_ef }}" data-bs-toggle="modal" data-bs-target="#edit_modal">
+                              <i class="fas fa-pencil-alt text-dark me-2" aria-hidden="true"></i>
+                              Edit
+                            </a>
+                          </td>
+                          <td class="align-middle">
+                            <form action="{{ url_for('home_blueprint.delete_asset_category', kategori_id=category.kode_kategori) }}" method="post">
+                              <input type="hidden" name="_method" value="POST">
+                              <button type="submit" class="bg-transparent border-0 text-xs text-danger" data-toggle="tooltip" data-original-title="Delete user">
+                                <i class="far fa-trash-alt me-2" aria-hidden="true"></i>
+                                Delete
+                              </button>
+                            </form>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+            <div class="card-footer">
+              <nav aria-label="Categories Pagination">
+                <ul class="pagination justify-content-center mb-0">
+                  {% if asset_categories.has_prev %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ asset_categories.prev_num }}">Prev</a>
+                    </li>
+                  {% endif %}
+                  {% for num in asset_categories.iter_pages(left_edge=1, left_current=1, right_current=2, right_edge=1) %}
+                    {% if num %}
+                      {% if asset_categories.page == num %}
+                        <li class="page-item active" aria-current="page">
+                          <a class="page-link" href="?page={{ num }}"><strong>{{ num }}</strong></a>
+                        </li>
+                      {% else %}
+                        <li class="page-item">
+                          <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                      {% endif %}
+                    {% else %}
+                      <li class="page-item disabled">
+                        <span class="page-link">&hellip;</span>
+                      </li>
+                    {% endif %}
+                  {% endfor %}
+                  {% if asset_categories.has_next %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ asset_categories.next_num }}">Next</a>
+                    </li>
+                  {% endif %}
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% include "includes/footer.html" %}
+    </div>
+    
+    <div class="modal fade" id="create_new_modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <form action="/add_asset_category" method="POST" id="create-form">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Add New Asset Category</h5>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="major_category_name">Major Category Name</label>
+                <select id="major_category_name" class="form-select" name="major_category_name" required>
+                  <option selected disabled>Select Asset Major Category</option>
+                  {% for category in major_categories %}
+                    <option value="{{ category }}">{{ category }}</option>
+                  {% endfor %}
+                </select>
+              </div>              
+              <div class="mb-3">
+                <label for="category_name">Category Name</label>
+                <select id="category_name" class="form-select" name="category_name" required>
+                  <option selected disabled>Select Asset Category</option>
+                  {% for category in categories %}
+                      <option>{{ category }}</option>
+                  {% endfor %}
+                </select>
+              </div>              
+              <div class="mb-3">
+                <label for="sub_category" class="form-label">IT Asset Subcategory</label>
+                <input id="sub_category" class="form-control" name="sub_category" placeholder="New Subcategories" required>
+              </div>
+              <div class="mb-3">
+                <label for="asset_ef">Asset Emission Factor (kWh/Unit)</label>
+                <input id="asset_ef" class="form-control" name="asset_ef" placeholder="e.g. 7640.6" type="number" required>
+              </div>
+              <p id="create-error" class="text-danger fw-bold"></p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <input type="submit" class="btn btn-primary" value="Add Data">
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="edit_modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <form action="{{ url_for('home_blueprint.update_asset_category', kategori_id='') }}" method="POST" id="edit-form">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Edit Asset Categories Data</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="asset_category_code_edit">Asset Category Code</label>
+                <input id="asset_category_code_edit" class="form-control" name="asset_category_code_edit" readonly="readonly">
+              </div>
+              <div class="mb-3">
+                <label for="major_category_name_edit">Major Category Name</label>
+                <input id="major_category_name_edit" class="form-control" name="major_category_name_edit" readonly="readonly">
+              </div>
+              <div class="mb-3">
+                <label for="category_name_edit">Category Name</label>
+                <input id="category_name_edit" class="form-control" name="category_name_edit" readonly="readonly">
+              </div>
+              <div class="mb-3">
+                <label for="sub_category_name_edit">Sub-Category Name</label>
+                <input id="sub_category_name_edit" class="form-control" name="sub_category_name_edit" placeholder="New Subcategories" required>
+              </div>
+              <div class="mb-3">
+                <label for="asset_ef_edit">Asset Emission Factors</label>
+                <input id="asset_ef_edit" class="form-control" name="asset_ef_edit" placeholder="e.g. 7640.6" type="number" required>
+              </div>
+              <p id="create-error" class="text-danger fw-bold"></p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <input type="submit" class="btn btn-primary" value="Update Data">
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      $('.edit-btn').on('click', function(event) {
+        var button = $(event.target); // Tombol yang mengaktifkan modal
+        var kodeKategori = button.data('kode-kategory'); // Mengambil nilai dari atribut data-kode-kategory
+        var majorCategory = button.data('major-category'); // Mengambil teks dari atribut data-major-category
+        var category = button.data('category'); // Mengambil teks dari atribut data-category
+        var subCategory = button.data('sub-category'); // Mengambil teks dari atribut data-sub-category
+        var assetEf = button.data('ef-aset'); // Mengambil teks dari atribut data-ef-aset
+        
+        // Menetapkan nilai kode_kategory, major_category, category, sub_category, dan asset_ef ke input di dalam modal
+        var modal = $('#edit_modal');
+        modal.find('#asset_category_code_edit').val(kodeKategori);
+        modal.find('#major_category_name_edit').val(majorCategory);
+        modal.find('#category_name_edit').val(category);
+        modal.find('#sub_category_name_edit').val(subCategory);
+        modal.find('#asset_ef_edit').val(assetEf);
+    
+        // Mengubah atribut action pada form untuk menyertakan kode_kategory
+        var form = modal.find('#edit-form');
+        var actionUrl = form.attr('action');
+        form.attr('action', actionUrl + kodeKategori);
+      });
+    });    
+  </script>
+{% endblock javascripts %}

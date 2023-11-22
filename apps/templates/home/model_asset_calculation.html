@@ -1,0 +1,986 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Emissions Model View {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+    <div class="container-fluid py-4">
+      <div class="row">
+        <div class="col-12">
+          <div class="card mb-4"> 
+            <div class="card-header pb-0">
+              <div class="d-flex align-items-center justify-content-end">
+                <h6 class="me-2 mt-2">IT Asset Category Emissions</h6>
+                <div class="d-flex nav-item dropdown">
+                  <a class="dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false"></a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="/model_units_view">Units Model View</a></li>
+                    <li><a class="dropdown-item" href="/model_asset_calculation">Emissions Model View</a></li>
+                  </ul>
+                </div>
+              </div>
+              <div style="text-align: center;">
+                <h5>As-Is IT Asset Emissions based on IT Asset Category</h5>
+              </div>
+              <div class="row">
+                <div class="col-lg-9">
+                  <div class="card z-index-2 mb-4">
+                    <div class="card-body p-3"> 
+                      <div class="border-radius-lg py-3 pe-1 mb-0">
+                        <div class="d-flex justify-content-start align-items-center">
+                          <h6 class="mb-3">IT Asset Emission Chart</h5>
+                          <div class="dropdown ms-auto">
+                            <button id="dropdownButton_menu1" class="btn btn-sm text-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
+                            <ul class="dropdown-menu">
+                              <li><a class="dropdown-item" href="#" onclick="updateButton_menu1('Energy')">Energy</a></li>
+                              <li><a class="dropdown-item" href="#" onclick="updateButton_menu1('Cost')">Cost</a></li>
+                              <li><a class="dropdown-item" href="#" onclick="updateButton_menu1('Carbon')">Carbon</a></li>
+                            </ul>
+                          </div>
+                          <div class="dropdown ms-2">
+                            <button id="dropdownButton_year1" class="btn btn-sm text-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
+                            <ul class="dropdown-menu">
+                              <li><a class="dropdown-item" href="#" onclick="updateButton_year1('Last 15 Years'); updateInformation1('Last 15 Years');">Last 15 Years</a></li>
+                              <li><a class="dropdown-item" href="#" onclick="updateButton_year1('Last 10 Years'); updateInformation1('Last 10 Years');">Last 10 Years</a></li>
+                              <li><a class="dropdown-item" href="#" onclick="updateButton_year1('Last 5 Years'); updateInformation1('Last 5 Years');">Last 5 Years</a></li>
+                            </ul>
+                          </div>
+                        </div>
+                        <div class="chart">
+                          <canvas id="chart-line1" class="chart-canvas" height="300"></canvas>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-3">
+                  <div class="card h-auto mb-3">
+                    <div class="card-header pb-0 p-3">
+                      <div class="row">
+                        <div class="col-6 d-flex align-items-center">
+                          <h6 class="mb-0">Overview</h6>
+                        </div>
+                        <div class="col-6 text-end">
+                          <a class="nav-link text-xs text-primary ms-2 mt-2" href="/emissions">View All</a>
+                        </div>
+                      </div>
+                      <h6 class="mb-1 text-dark font-weight-bold text-sm" id="dataContainer1"></h6>
+                      <p class="text-sm">
+                        <i class="fa fa-arrow-up text-success" aria-hidden="true" id="arrowIcon1"></i>
+                        <span class="font-weight-bold" id="dataContainer8"></span> in average
+                      </p>
+                    </div>
+                    <div class="card-body p-3">
+                      <div class="timeline timeline-one-side">
+                        <div class="timeline-block mb-3">
+                          <span class="timeline-step">
+                            <i class="ni ni-cart text-success text-gradient"></i>
+                          </span>
+                          <div class="timeline-content">
+                            <h6 class="text-dark text-sm font-weight-bold mb-0">Total Units</h6>
+                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0" id="dataContainer9"></p>
+                          </div>
+                        </div>
+                        <div class="timeline-block mb-3">
+                          <span class="timeline-step">
+                            <i class="ni ni-credit-card text-danger text-gradient"></i>
+                          </span>
+                          <div class="timeline-content">
+                            <h6 class="text-dark text-sm font-weight-bold mb-0">Energy Consumption</h6>
+                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0" id="dataContainer10"></p>
+                          </div>
+                        </div>
+                        <div class="timeline-block mb-3">
+                          <span class="timeline-step">
+                            <i class="ni ni-money-coins text-info text-gradient"></i>
+                          </span>
+                          <div class="timeline-content">
+                            <h6 class="text-dark text-sm font-weight-bold mb-0">Cost Consumption</h6>
+                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0" id="dataContainer11"></p>
+                          </div>
+                        </div>
+                        <div class="timeline-block mb-3">
+                          <span class="timeline-step">
+                            <i class="ni ni-bell-55 text-warning text-gradient"></i>
+                          </span>
+                          <div class="timeline-content">
+                            <h6 class="text-dark text-sm font-weight-bold mb-0">Carbon Emission</h6>
+                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0" id="dataContainer12"></p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-12">
+          <div class="card mb-4"> 
+            <div class="card-header pb-0">
+              <div class="d-flex align-items-center justify-content-end">
+                <h6 class="me-2 mt-2">IT Asset Subcategory Emissions</h6>
+                <div class="d-flex nav-item dropdown">
+                  <a class="dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false"></a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="/model_units_view">Units Model View</a></li>
+                    <li><a class="dropdown-item" href="/model_asset_calculation">Emissions Model View</a></li>
+                  </ul>
+                </div>
+              </div>
+              <div style="text-align: center;">
+                <h5>As-Is IT Asset Emissions based on IT Asset Subcategory</h5>
+              </div>
+              <div class="row">
+                <div class="col-lg-9">
+                  <div class="card z-index-2 mb-4">
+                    <div class="card-body p-3"> 
+                      <div class="border-radius-lg py-3 pe-1 mb-0">
+                        <div class="d-flex justify-content-start align-items-center">
+                          <h6 class="mb-3">IT Asset Emission Chart</h5>
+                          <div class="dropdown ms-auto">
+                            <button id="dropdownButton_menu2" class="btn btn-sm text-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
+                            <ul class="dropdown-menu">
+                              <li><a class="dropdown-item" href="#" onclick="updateButton_menu2('Energy')">Energy</a></li>
+                              <li><a class="dropdown-item" href="#" onclick="updateButton_menu2('Cost')">Cost</a></li>
+                              <li><a class="dropdown-item" href="#" onclick="updateButton_menu2('Carbon')">Carbon</a></li>
+                            </ul>
+                          </div>
+                          <div class="dropdown ms-2">
+                            <button id="dropdownButton_category2" class="btn btn-sm text-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
+                            <ul class="dropdown-menu">
+                              {% for category in categories %}
+                                <li><a class="dropdown-item" href="#" onclick="updateButton_category2('{{ category }}'); updateInformation3('{{ category }}');">{{ category }}</a></li>
+                              {% endfor %}
+                            </ul>
+                          </div>
+                          <div class="dropdown ms-2">
+                            <button id="dropdownButton_year2" class="btn btn-sm text-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
+                            <ul class="dropdown-menu">
+                              <li><a class="dropdown-item" href="#" onclick="updateButton_year2('Last 15 Years'); updateInformation2('Last 15 Years');">Last 15 Years</a></li>
+                              <li><a class="dropdown-item" href="#" onclick="updateButton_year2('Last 10 Years'); updateInformation2('Last 10 Years');">Last 10 Years</a></li>
+                              <li><a class="dropdown-item" href="#" onclick="updateButton_year2('Last 5 Years'); updateInformation2('Last 5 Years');">Last 5 Years</a></li>
+                            </ul>
+                          </div>
+                        </div>
+                        <div class="chart">
+                          <canvas id="chart-line2" class="chart-canvas" height="300"></canvas>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-3">
+                  <div class="card h-auto mb-3">
+                    <div class="card-header pb-0 p-3">
+                      <div class="row">
+                        <div class="col-6 d-flex align-items-center">
+                          <h6 class="mb-0">Overview</h6>
+                        </div>
+                        <div class="col-6 text-end">
+                          <a class="nav-link text-xs text-primary ms-2 mt-2" href="/emissions">View All</a>
+                        </div>
+                      </div>
+                      <h6 class="mb-1 text-dark font-weight-bold text-sm" id="dataContainer2"></h6>
+                      <p class="text-sm">
+                        <i class="fa fa-arrow-up text-success" aria-hidden="true" id="arrowIcon"></i>
+                        <span class="font-weight-bold" id="dataContainer3"></span> in average
+                      </p>
+                    </div>
+                    <div class="card-body p-3">
+                      <div class="timeline timeline-one-side">
+                        <div class="timeline-block mb-3">
+                          <span class="timeline-step">
+                            <i class="ni ni-cart text-success text-gradient"></i>
+                          </span>
+                          <div class="timeline-content">
+                            <h6 class="text-dark text-sm font-weight-bold mb-0">Total Units</h6>
+                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0" id="dataContainer4"></p>
+                          </div>
+                        </div>
+                        <div class="timeline-block mb-3">
+                          <span class="timeline-step">
+                            <i class="ni ni-credit-card text-danger text-gradient"></i>
+                          </span>
+                          <div class="timeline-content">
+                            <h6 class="text-dark text-sm font-weight-bold mb-0">Energy Consumption</h6>
+                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0" id="dataContainer5"></p>
+                          </div>
+                        </div>
+                        <div class="timeline-block mb-3">
+                          <span class="timeline-step">
+                            <i class="ni ni-money-coins text-info text-gradient"></i>
+                          </span>
+                          <div class="timeline-content">
+                            <h6 class="text-dark text-sm font-weight-bold mb-0">Cost Consumption</h6>
+                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0" id="dataContainer6"></p>
+                          </div>
+                        </div>
+                        <div class="timeline-block mb-3">
+                          <span class="timeline-step">
+                            <i class="ni ni-bell-55 text-warning text-gradient"></i>
+                          </span>
+                          <div class="timeline-content">
+                            <h6 class="text-dark text-sm font-weight-bold mb-0">Carbon Emission</h6>
+                            <p class="text-secondary font-weight-bold text-xs mt-1 mb-0" id="dataContainer7"></p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+     
+      {% include "includes/footer.html" %}
+
+    </div>
+    
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}
+  <script src="{{ config.ASSETS_ROOT }}/js/plugins/chartjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <script>
+    // Inisialisasi JavaScript di awal Loading Page
+    document.addEventListener("DOMContentLoaded", function() {
+      update_all_chart1('Carbon','Last 15 Years');
+      update_all_chart2('Carbon','Komputer','Last 15 Years');
+      updateButton_year1('Last 15 Years');
+      updateButton_year2('Last 15 Years');
+      updateButton_menu1('Carbon');
+      updateButton_menu2('Carbon');
+      updateButton_category2('Komputer');
+      updateInformation1('Last 15 Years');
+      updateInformation2('Last 15 Years');
+      updateInformation3('Komputer');
+    });
+    // Data emisi dari Python
+    var total_emissions = {{ get_emission_over_year | tojson }};
+    var latest_year = parseInt({{ latest_year }});
+    var last_15_year = parseInt({{ last_15_year }});
+    var last_10_year = parseInt({{ last_10_year }});
+    var last_5_year = parseInt({{ last_5_year }});
+
+
+    // Function untuk kedua chart
+    // Function untuk kedua chart
+    // Function untuk kedua chart
+    // Function untuk membuat warna gradien
+    function createGradient(color, ctx) {
+      var gradient = ctx.createLinearGradient(0, 230, 0, 50);
+      var rgbaColor = color.replace('rgb', 'rgba').replace(')', ',0.2)');
+      gradient.addColorStop(1, rgbaColor);
+      rgbaColor = color.replace('rgb', 'rgba').replace(')', ',0.1)');
+      gradient.addColorStop(0.2, rgbaColor);
+      rgbaColor = color.replace('rgb', 'rgba').replace(')', ',0.05)');
+      gradient.addColorStop(0, rgbaColor);
+    
+      return gradient;
+    }
+
+    // Function untuk slicing data tahun
+    function filterDataByYear(data, masukan_tahun) {
+      var filteredData = [];
+      for (var key in data) {
+        var year = data[key][0];      
+        if (year >= masukan_tahun) {
+          filteredData.push(data[key]);
+        }
+      }
+      return filteredData;
+    }
+
+    // Fungsi untuk perhitungan rate kenaikan
+    function calculate_average_percentage_increase(values) {
+      var total_increase = 0;
+      for (var i = 0; i < values.length - 1; i++) {
+        var initial_value = values[i];
+        var final_value = values[i + 1];
+        var percentage_increase;
+        if (initial_value !== 0) {
+          percentage_increase = ((final_value - initial_value) / initial_value) * 100;
+        } else {
+          percentage_increase = 100; // nilai diubah menjadi 100 jika pembaginya adalah 0
+        }
+        total_increase += percentage_increase;
+      }
+      var average_increase = total_increase / (values.length - 1);
+      return average_increase;
+    }
+
+
+
+    // Pembuatan line chart pertama (category)
+    // Pembuatan line chart pertama (category)
+    // Pembuatan line chart pertama (category)
+    data_line1 = filterDataByYear(total_emissions, last_15_year);
+    var ctx1 = document.getElementById("chart-line1").getContext("2d");
+    window.myChart1 = updateChart1(data_line1, ctx1, 4, " tonCO2");
+
+    // Fungsi untuk mengubah format data total_emissions yang memiliki sub_category menjadi grouped by category dan diurutkan berdasarkan category
+    function groupAndAggregateData(data) {
+      const result = [];
+      const groups = {};
+    
+      for (let i = 0; i < data.length; i++) {
+        const year = data[i][0];
+        const category = data[i][1];
+        const energy = parseFloat(data[i][3]);
+        const cost = parseFloat(data[i][4]);
+        const carbon = parseFloat(data[i][5]);
+    
+        if (!groups[year]) {
+          groups[year] = {};
+        }
+    
+        if (!groups[year][category]) {
+          groups[year][category] = [energy, cost, carbon];
+        } else {
+          groups[year][category][0] += energy;
+          groups[year][category][1] += cost;
+          groups[year][category][2] += carbon;
+        }
+      }
+    
+      for (const year in groups) {
+        for (const category in groups[year]) {
+          const aggregatedData = [
+            parseInt(year),
+            category,
+            groups[year][category][0].toFixed(2),
+            groups[year][category][1].toFixed(2),
+            groups[year][category][2].toFixed(2)
+          ];
+          result.push(aggregatedData);
+        }
+      }
+      result.sort((a, b) => a[1].localeCompare(b[1])); // Urutkan berdasarkan category_name
+      return result;
+    }
+
+    // Function untuk slicing data kategori dan diurutkan berdasakran sub-kategorinya
+    function filterDataByCat(data, masukan_category) {
+      var filteredData = [];
+    
+      for (var key in data) {
+        var category = data[key][1];
+    
+        if (category === masukan_category) {
+          filteredData.push(data[key]);
+        }
+      }
+    
+      filteredData.sort(function(a, b) {
+        var valueA = a[2].toLowerCase();
+        var valueB = b[2].toLowerCase();
+    
+        if (valueA < valueB) {
+          return -1;
+        }
+        if (valueA > valueB) {
+          return 1;
+        }
+        return 0;
+      });
+    
+      return filteredData;
+    }
+
+    // Fucntion pembuatan chart 1
+    function updateChart1(result, ctx, id_elements, units) {
+      var result = groupAndAggregateData(result);
+      var years = new Set();
+      var categories = new Set();
+      
+      for (var i = 0; i < result.length; i++) {
+        var item = result[i][0];
+        var cat = result[i][1];
+        years.add(item);
+        categories.add(cat);
+      }
+
+      var uniqueYears = Array.from(years);
+      var uniqueCategories = Array.from(categories);
+      var colorScheme = [
+        "rgb(255, 74, 74)",
+        "rgb(74, 255, 74)",
+        "rgb(74, 74, 255)",
+        "rgb(255, 219, 120)",
+        "rgb(255, 74, 255)",
+        "rgb(74, 255, 255)",
+        "rgb(255, 169, 74)",
+        "rgb(255, 182, 193)",
+        "rgb(255, 218, 185)",
+        "rgb(135, 206, 235)",
+        "rgb(152, 251, 152)",
+        "rgb(255, 160, 122)",
+        "rgb(255, 192, 203)",
+        "rgb(175, 238, 238)",
+        "rgb(216, 191, 216)",
+        "rgb(240, 230, 140)"
+      ];
+      var datasets = [];
+      var n = 0;
+      for (var j = 0; j < uniqueCategories.length; j++) {
+        var counts = [];
+        for (var i = 0; i < uniqueYears.length; i++) {
+          var tahun_perolehan = result[n][0];
+          var category_name = result[n][1];
+          counts.push(result[n][id_elements]);
+          n += 1;
+        }
+        var gradients = createGradient(colorScheme[j], ctx);
+        var dataset = {
+          label: category_name,
+          type: "line",
+          tension: 0.4,
+          borderWidth: 0,
+          pointRadius: 0,
+          borderColor: colorScheme[j],
+          backgroundColor: gradients,
+          fill: true,
+          borderWidth: 3,
+          maxBarThickness: 6,
+          data: counts,
+        };
+        datasets.push(dataset);
+      }
+      
+      return new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: uniqueYears,
+          datasets: datasets,
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              align: 'middle',
+              position: 'bottom',
+              labels: {
+                boxWidth: 10,
+                boxHeight: 10,
+              }
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index',
+          },
+          scales: {
+            y: {
+              grid: {
+                drawBorder: false,
+                display: true,
+                drawOnChartArea: true,
+                drawTicks: false,
+              },
+              ticks: {
+                suggestedMin: 0,
+                suggestedMax: 500,
+                beginAtZero: true,
+                padding: 15,
+                display: true,
+                padding: 10,
+                color: '#000000',
+                font: {
+                  size: 11,
+                  family: "Open Sans",
+                  style: 'normal',
+                  lineHeight: 2
+                },
+                callback: function (value) {
+                  return (value/1000).toLocaleString() + units;
+                }
+              },
+            },
+            x: {
+              grid: {
+                drawBorder: false,
+                display: false,
+                drawOnChartArea: false,
+                drawTicks: false
+              },
+              ticks: {
+                display: true,
+                color: "#000000",
+                font: {
+                  size: 11,
+                  family: "Open Sans",
+                  style: 'normal',
+                  lineHeight: 2
+                }
+              },
+            },
+          },
+        },
+      });
+    }
+
+    // Function untuk update chart sesuai dengan opsi yang dipilh
+    function updateButton_menu1(selectedOption) {
+      document.getElementById('dropdownButton_menu1').textContent = selectedOption;
+      update_all_chart1(selectedOption, document.getElementById('dropdownButton_year1').textContent)
+    }
+
+    // Function untuk update chart sesuai dengan batasan tahun yang dipilh
+    function updateButton_year1(selectedYear) {
+      document.getElementById('dropdownButton_year1').textContent = selectedYear;
+      update_all_chart1(document.getElementById('dropdownButton_menu1').textContent, selectedYear)
+    }
+
+    // Function untuk update chart sesuai dengan tahun dan opsi yang dipilh
+    function update_all_chart1(selectedOption, selectedYear) {
+      // Pilihan Jenis Opsi
+      var id_elements = 4;
+      var units = " tonCO2";
+      if (selectedOption === 'Carbon') {
+        id_elements = 4;
+        units = " tonCO2";
+      } else if (selectedOption === 'Energy') {
+        id_elements = 2;
+        units = " MWh";
+      } else if (selectedOption === 'Cost') {
+        id_elements = 3;
+        units = " juta";
+      }
+
+      // Pilihan jenis tahun
+      if (selectedYear === 'Last 15 Years') {
+        var year = last_15_year;
+      } else if (selectedYear === 'Last 10 Years') {
+        var year = last_10_year;
+      } else if (selectedYear === 'Last 5 Years') {
+        var year = last_5_year;
+      }
+      data_line1 = filterDataByYear(total_emissions, year);
+
+      // Menghapus chart sebelumnya jika ada
+      if (window.myChart1) {
+        window.myChart1.destroy();
+      }
+      // Pembuatan bar chart pertama (category)
+      var ctx1 = document.getElementById("chart-line1").getContext("2d");
+      window.myChart1 = updateChart1(data_line1, ctx1, id_elements, units);
+    }
+
+    // Function untuk mendapatkan informasi chart yang akan ditampilkan
+    function get_category_overview(data, input_year) {
+      var tahun_start = input_year; // Tahun mulai
+      var total_unit = 0,
+        total_energy = 0,
+        total_cost = 0,
+        total_carbon = 0,
+        energy_temp = 0;
+      var energy_data = [];
+      for (var i = 0; i < data.length; i++) {
+        if (data[i][0] >= input_year) {
+          if (data[i][0] !== tahun_start) {
+            energy_data.push(energy_temp);
+            energy_temp = 0; // Set energy_temp menjadi 0 saat tahun berganti
+            tahun_start++;
+          }
+          total_unit += parseInt(data[i][6]);
+          energy_temp += parseFloat(data[i][5]); // Tambahkan row[5] ke energy_temp
+          if (data[i][0] === latest_year) {
+            total_energy += parseFloat(data[i][3]);
+            total_cost += parseFloat(data[i][4]);
+            total_carbon += parseFloat(data[i][5]);
+          }
+        }
+      }
+      energy_data.push(energy_temp);
+      var avg_increase_percentage = calculate_average_percentage_increase(energy_data);
+      // Warna HTML
+      var color1 = "fa-arrow-up";
+      var color2 = "";
+      if (avg_increase_percentage > 10) {
+        color2 = "text-danger";
+      } else if (avg_increase_percentage > 5) {
+        color2 = "text-warning";
+      } else if (avg_increase_percentage > 0) {
+        color2 = "text-info";
+      } else {
+        color1 = "fa-arrow-down";
+        color2 = "text-success";
+      }
+      // Format angka dengan 2 angka di belakang koma dan format ribuan
+      var total_unit_formatted = total_unit.toLocaleString();
+      var total_energy_formatted = total_energy.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var total_cost_formatted = total_cost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var total_carbon_formatted = total_carbon.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var avg_increase_percentage_formatted = avg_increase_percentage.toFixed(2);
+    
+      return [total_unit_formatted, total_energy_formatted, total_cost_formatted, total_carbon_formatted, avg_increase_percentage_formatted, color1, color2];
+    }
+
+    // Function untuk update informasi chart
+    function updateInformation1(selectedYear) {
+      // Pilihan jenis tahun
+      var arrowIcon = document.getElementById('arrowIcon1');
+      arrowIcon.classList.remove("fa-arrow-down", "fa-arrow-up", "text-danger", "text-warning", "text-info");
+      if (selectedYear === 'Last 15 Years') {
+        var year = last_15_year;
+      } else if (selectedYear === 'Last 10 Years') {
+        var year = last_10_year;
+      } else if (selectedYear === 'Last 5 Years') {
+        var year = last_5_year;
+      }
+      var result = get_category_overview(total_emissions, year);
+      document.getElementById('dataContainer1').innerHTML = "From " + year + " to " + latest_year;
+      document.getElementById('dataContainer8').innerHTML = result[4] + "%";
+      arrowIcon.classList.add(result[5], result[6]);
+      document.getElementById('dataContainer9').innerHTML = result[0];
+      document.getElementById('dataContainer10').innerHTML = result[1] + " kWh/Year";
+      document.getElementById('dataContainer11').innerHTML = "Rp " + result[2] + "/Year";
+      document.getElementById('dataContainer12').innerHTML = result[3] + " kgCO2";
+    }
+
+
+
+    // Pembuatan line chart kedua (subcategory)
+    // Pembuatan line chart kedua (subcategory)
+    // Pembuatan line chart kedua (subcategory)
+    data_line2 = filterDataByCat(filterDataByYear(total_emissions, last_15_year), "Komputer");
+    var ctx2 = document.getElementById("chart-line2").getContext("2d");
+    window.myChart2 = updateChart2(data_line2, ctx2, 5, " tonCO2");
+    
+    // Function untuk pembuatan chart kedua
+    function updateChart2(result, ctx, id_elements, units) {
+      var years = new Set();
+      var categories = new Set();
+      
+      for (var i = 0; i < result.length; i++) {
+        var item = result[i][0];
+        var cat = result[i][2];
+        years.add(item);
+        categories.add(cat);
+      }
+
+      var uniqueYears = Array.from(years);
+      var uniqueCategories = Array.from(categories);
+      var colorScheme = [
+        "rgb(255, 74, 74)",
+        "rgb(74, 255, 74)",
+        "rgb(74, 74, 255)",
+        "rgb(255, 219, 120)",
+        "rgb(255, 74, 255)",
+        "rgb(74, 255, 255)",
+        "rgb(255, 169, 74)",
+        "rgb(255, 182, 193)",
+        "rgb(255, 218, 185)",
+        "rgb(135, 206, 235)",
+        "rgb(152, 251, 152)",
+        "rgb(255, 160, 122)",
+        "rgb(255, 192, 203)",
+        "rgb(175, 238, 238)",
+        "rgb(216, 191, 216)",
+        "rgb(240, 230, 140)"
+      ];
+      var datasets = [];
+      var n = 0;
+      for (var j = 0; j < uniqueCategories.length; j++) {
+        var counts = [];
+        for (var i = 0; i < uniqueYears.length; i++) {
+          var tahun_perolehan = result[n][0];
+          var category_name = result[n][2];
+          counts.push(result[n][id_elements]);
+          n += 1;
+        }
+        var gradients = createGradient(colorScheme[j], ctx);
+        var dataset = {
+          label: category_name,
+          type: "line",
+          tension: 0.4,
+          borderWidth: 0,
+          pointRadius: 0,
+          borderColor: colorScheme[j],
+          backgroundColor: gradients,
+          fill: true,
+          borderWidth: 3,
+          maxBarThickness: 6,
+          data: counts,
+        };
+        datasets.push(dataset);
+      }
+      
+      return new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: uniqueYears,
+          datasets: datasets,
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              align: 'middle',
+              position: 'bottom',
+              labels: {
+                boxWidth: 10,
+                boxHeight: 10,
+              }
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index',
+          },
+          scales: {
+            y: {
+              grid: {
+                drawBorder: false,
+                display: true,
+                drawOnChartArea: true,
+                drawTicks: false,
+              },
+              ticks: {
+                suggestedMin: 0,
+                suggestedMax: 500,
+                beginAtZero: true,
+                padding: 15,
+                display: true,
+                padding: 10,
+                color: '#000000',
+                font: {
+                  size: 11,
+                  family: "Open Sans",
+                  style: 'normal',
+                  lineHeight: 2
+                },
+                callback: function (value) {
+                  return (value/1000).toLocaleString() + units;
+                }
+              },
+            },
+            x: {
+              grid: {
+                drawBorder: false,
+                display: false,
+                drawOnChartArea: false,
+                drawTicks: false
+              },
+              ticks: {
+                display: true,
+                color: "#000000",
+                font: {
+                  size: 11,
+                  family: "Open Sans",
+                  style: 'normal',
+                  lineHeight: 2
+                }
+              },
+            },
+          },
+        },
+      });
+    }
+
+    // Function untuk update chart sesuai dengan opsi yang dipilh
+    function updateButton_menu2(selectedOption) {
+      document.getElementById('dropdownButton_menu2').textContent = selectedOption;
+      update_all_chart2(selectedOption, document.getElementById('dropdownButton_category2').textContent, document.getElementById('dropdownButton_year2').textContent);
+    }
+
+    // Function untuk update chart sesuai dengan batasan kategori yang dipilh
+    function updateButton_category2(selectedCategory) {
+      document.getElementById('dropdownButton_category2').textContent = selectedCategory;
+      update_all_chart2(document.getElementById('dropdownButton_menu2').textContent, selectedCategory, document.getElementById('dropdownButton_year2').textContent);
+      var arrowIcon = document.getElementById('arrowIcon');
+      arrowIcon.classList.remove("fa-arrow-down", "fa-arrow-up", "text-danger", "text-warning", "text-info");
+      if (document.getElementById('dropdownButton_year2').textContent === "Last 15 Years"){
+        var year = last_15_year;
+      } else if (document.getElementById('dropdownButton_year2').textContent === "Last 10 Years"){
+        var year = last_10_year;
+      } else if (document.getElementById('dropdownButton_year2').textContent === "Last 5 Years"){
+        var year = last_5_year;
+      }
+      var result = get_subcategory_rate(total_emissions, year, selectedCategory);
+      document.getElementById('dataContainer3').innerHTML = result[0] + "%";
+      arrowIcon.classList.add(result[1], result[2]);
+    }
+
+    // Function untuk update chart sesuai dengan batasan tahun yang dipilh
+    function updateButton_year2(selectedYear) {
+      document.getElementById('dropdownButton_year2').textContent = selectedYear;
+      update_all_chart2(document.getElementById('dropdownButton_menu2').textContent, document.getElementById('dropdownButton_category2').textContent, selectedYear);
+      var arrowIcon = document.getElementById('arrowIcon');
+      if (selectedYear === 'Last 15 Years') {
+        var year = last_15_year;
+      } else if (selectedYear === 'Last 10 Years') {
+        var year = last_10_year;
+      } else if (selectedYear === 'Last 5 Years') {
+        var year = last_5_year;
+      }
+      var result = get_subcategory_rate(total_emissions, year, document.getElementById('dropdownButton_category2').textContent);
+      document.getElementById('dataContainer3').innerHTML = result[0] + "%";
+      arrowIcon.classList.add(result[1], result[2]);
+    }
+
+    // Function untuk update chart sesuai dengan tahun,opsi, dan kategori yang dipilh
+    function update_all_chart2(selectedOption, selectedCategory, selectedYear) {
+      // Pilihan Jenis Opsi
+      var id_elements = 5;
+      var units = " tonCO2";
+      if (selectedOption === 'Carbon') {
+        id_elements = 5;
+        units = " tonCO2";
+      } else if (selectedOption === 'Energy') {
+        id_elements = 3;
+        units = " MWh";
+      } else if (selectedOption === 'Cost') {
+        id_elements = 4;
+        units = " ribu rupiah";
+      }
+
+      // Pilihan jenis tahun
+      if (selectedYear === 'Last 15 Years') {
+        var year = last_15_year;
+      } else if (selectedYear === 'Last 10 Years') {
+        var year = last_10_year;
+      } else if (selectedYear === 'Last 5 Years') {
+        var year = last_5_year;
+      }
+      data_line2 = filterDataByYear(total_emissions, year);
+      
+      // Pilihan category
+      data_line2 = filterDataByCat(data_line2, selectedCategory);
+
+      // Menghapus chart sebelumnya jika ada
+      if (window.myChart2) {
+        window.myChart2.destroy();
+      }
+      // Pembuatan line chart kedua (subcategory)
+      var ctx2 = document.getElementById("chart-line2").getContext("2d");
+      window.myChart2 = updateChart2(data_line2, ctx2, id_elements, units);
+    }
+
+    // Function untuk mendapatkan informasi rate pada chart
+    function get_subcategory_rate(data, input_year, category) {
+      var tahun_start = input_year; // Tahun mulai
+      var energy_temp = 0;
+      var energy_data = [];
+      for (var i = 0; i < data.length; i++) {
+        if (data[i][0] >= input_year) {
+          if (data[i][1] === category) {
+            if (data[i][0] !== tahun_start) {
+              energy_data.push(energy_temp);
+              energy_temp = 0; // Set energy_temp menjadi 0 saat tahun berganti
+              tahun_start++;
+            }
+            energy_temp += parseFloat(data[i][5]);
+          }
+        }
+      }
+      energy_data.push(energy_temp);
+      var avg_increase_percentage = calculate_average_percentage_increase(energy_data);
+      // Warna HTML
+      var color1 = "fa-arrow-up";
+      var color2 = "";
+      if (avg_increase_percentage > 10) {
+        color2 = "text-danger";
+      } else if (avg_increase_percentage > 5) {
+        color2 = "text-warning";
+      } else if (avg_increase_percentage > 0) {
+        color2 = "text-info";
+      } else {
+        color1 = "fa-arrow-down";
+        color2 = "text-success";
+      }
+      // Format angka dengan 2 angka di belakang koma dan format ribuan
+      var avg_increase_percentage_formatted = avg_increase_percentage.toFixed(2);
+      return [avg_increase_percentage_formatted, color1, color2];
+    }
+
+    // Function untuk mendapatkan informasi total energy sesuai dengan batasan kategori dan tahun yang dimasukkan pada chart
+    function getTotalEnergyByYearAndSubCategory(total_emissions, year, category) {
+      let totalSum = 0;
+      for (let i = 0; i < total_emissions.length; i++) {
+        if (total_emissions[i][0] === year && total_emissions[i][1] === category) {
+          totalSum += parseFloat(total_emissions[i][3]);
+        }
+      }
+      return totalSum;
+    }
+
+    // Function untuk mendapatkan informasi total cost sesuai dengan batasan kategori dan tahun yang dimasukkan pada chart
+    function getTotalCostByYearAndSubCategory(total_emissions, year, category) {
+      let totalSum = 0;
+      for (let i = 0; i < total_emissions.length; i++) {
+        if (total_emissions[i][0] === year && total_emissions[i][1] === category) {
+          totalSum += parseFloat(total_emissions[i][4]);
+        }
+      }
+      return totalSum;
+    }
+
+    // Function untuk mendapatkan informasi total carbon sesuai dengan batasan kategori dan tahun yang dimasukkan pada chart
+    function getTotalCarbonByYearAndSubCategory(total_emissions, year, category) {
+      let totalSum = 0;
+      for (let i = 0; i < total_emissions.length; i++) {
+        if (total_emissions[i][0] === year && total_emissions[i][1] === category) {
+          totalSum += parseFloat(total_emissions[i][5]);
+        }
+      }
+      return totalSum;
+    } 
+
+    // Function untuk mendapatkan informasi total unit sesuai dengan batasan kategori yang dimasukkan pada chart
+    function getTotalUnitsByYearAndSubCategory(total_emissions, category) {
+      let totalSum = 0;
+      for (let i = 0; i < total_emissions.length; i++) {
+        if (total_emissions[i][1] === category) {
+          totalSum += parseInt(total_emissions[i][6]);
+        }
+      }
+      return totalSum;
+    }
+
+    // Function untuk update informasi tahun pada chart
+    function updateInformation2(selectedYear) {
+      // Pilihan jenis tahun
+      if (selectedYear === 'Last 15 Years') {
+        var year = last_15_year;
+      } else if (selectedYear === 'Last 10 Years') {
+        var year = last_10_year;
+      } else if (selectedYear === 'Last 5 Years') {
+        var year = last_5_year;
+      }
+      document.getElementById('dataContainer2').innerHTML = "From " + year + " to " + latest_year;
+    }
+    
+    // Function untuk update informasi total pada chart
+    function updateInformation3(selectedCategory) {
+      // Pilihan jenis tahun
+      var energy = getTotalEnergyByYearAndSubCategory(total_emissions, latest_year, selectedCategory);
+      var energyFormatted = energy.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var cost = getTotalCostByYearAndSubCategory(total_emissions, latest_year, selectedCategory);
+      var costFormatted = cost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var carbon = getTotalCarbonByYearAndSubCategory(total_emissions, latest_year, selectedCategory);
+      var carbonFormatted = carbon.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var unit = getTotalUnitsByYearAndSubCategory(total_emissions, selectedCategory);
+      var unitFormatted = unit.toLocaleString();
+      document.getElementById('dataContainer4').innerHTML = unitFormatted;
+      document.getElementById('dataContainer5').innerHTML = energyFormatted + " kWh/Year";
+      document.getElementById('dataContainer6').innerHTML = "Rp " + costFormatted + "/Year";
+      document.getElementById('dataContainer7').innerHTML = carbonFormatted + " kgCO2";
+    }
+  </script>
+{% endblock javascripts %}

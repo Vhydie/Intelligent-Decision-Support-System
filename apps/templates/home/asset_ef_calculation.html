@@ -1,0 +1,741 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Asset Emission Factors Calculation {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="container-fluid py-4">
+
+      <div class="row">
+        <div class="col-12">
+          <div class="card mb-4"> 
+            <div class="card-header pb-0">
+              <div class="d-flex align-items-center">
+                <h5 class="me-2 mt-2">Asset Emission Factors Calculation</h5>
+                <div class="d-flex nav-item dropdown">
+                  <a class="dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false"></a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="/carbon_calculation">Carbon Subcategory Emissions</a></li>
+                    <li><a class="dropdown-item" href="/asset_ef_calculation">Asset Emission Factors Calculation</a></li>
+                  </ul>
+                </div>
+              </div>
+              <div class="card-body px-0 pt-0 pb-2">
+                <div class="col-auto">
+                  <form class="needs-validation" novalidate>
+                    <div class="row g-3">
+                      <div class="col-md-4">
+                        <label for="category" class="form-label">IT Asset Category</label>
+                        <select class="form-select" id="category" required onchange="getSubcategories(this)">
+                          <option selected disabled>Select IT Asset Category</option>
+                          {% for category in asset_categories %}
+                            <option>{{ category[0] }}</option>
+                          {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">
+                          Please select a valid IT Asset Category.
+                        </div>
+                      </div>
+
+                      <div class="col-md-4">
+                        <label for="sub_category" class="form-label">IT Asset Subcategory</label>
+                        <select class="form-select" id="sub_category" required>
+                          <option selected disabled>Select IT Asset Subcategory</option>
+                        </select>
+                        <div class="invalid-feedback">
+                          Please provide a valid subcategory.
+                        </div>
+                      </div>
+                      <div class="col auto" id="ef_group">
+                        <label for="ef_value" class="form-label">As-Is Emission Factors</label>
+                        <div class="input-group has-validation">
+                          <input type="text" class="form-control" id="ef_value" placeholder="" readonly>
+                          <div class="invalid-feedback">
+                            Emission factor is required.
+                          </div>
+                          <span class="input-group-text" id="ef_unit">kWh/Year</span>
+                        </div>
+                      </div>
+                    <div class="my-3">
+                      <!-- USAGE CONTROL -->
+                      <h6 class="mb-3">Usage Controls:</h6>
+                      <div class="row g-4">
+                        <div class="col-md-3">
+                          <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="include_idle">
+                            <label class="form-check-label" for="include_idle">Differentiate Idle Time</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3">
+                          <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="include_sleep">
+                            <label class="form-check-label" for="include_sleep">Include Sleep/StandBy Time</label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row auto">
+                        <div class="col auto" id="active_group">
+                          <label for="active_value" class="form-label">Active Power Consumption</label>
+                          <div class="input-group has-validation">
+                            <input type="text" class="form-control" id="active_value" placeholder="Power Consumption Active" required>
+                            <div class="invalid-feedback">
+                              Power consumption is required.
+                            </div>
+                            <span class="input-group-text" id="ef_unit_power">Watt/Unit</span>
+                          </div>
+                        </div>
+                        <div class="col auto" id="idle_group" style="display: none;">
+                          <label for="idle_value" class="form-label">Idle Power Consumption</label>
+                          <div class="input-group has-validation">
+                            <input type="text" class="form-control" id="idle_value" placeholder="Power Consumption Active" required>
+                            <div class="invalid-feedback">
+                              Power consumption is required.
+                            </div>
+                            <span class="input-group-text" id="ef_unit_power">Watt/Unit</span>
+                          </div>
+                        </div>
+                        <div class="col auto" id="sleep_group" style="display: none;">
+                          <label for="sleep_value" class="form-label">Sleep/StandBy Power Consumption</label>
+                          <div class="input-group has-validation">
+                            <input type="text" class="form-control" id="sleep_value" placeholder="Power Consumption Active" required>
+                            <div class="invalid-feedback">
+                              Power consumption is required.
+                            </div>
+                            <span class="input-group-text" id="ef_unit_power">Watt/Unit</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- TIME GRANULARITY CONTROL -->
+                      <h6 class="mb-3">Time-Granularity Controls:</h6>
+                      <div class="row g-4">
+                        <div class="col-md-3">
+                          <div class="form-check">
+                            <input id="monthly" name="time_option" type="radio" class="form-check-input" required>
+                            <label class="form-check-label" for="monthly">Monthly</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3">
+                          <div class="form-check">
+                            <input id="weekly" name="time_option" type="radio" class="form-check-input" required>
+                            <label class="form-check-label" for="weekly">Weekly</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3">
+                          <div class="form-check">
+                            <input id="daily" name="time_option" type="radio" class="form-check-input" required>
+                            <label class="form-check-label" for="daily">Daily</label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row g-3">
+                        <div class="col auto" id="year_active_group" >
+                          <label for="year_active_usage" class="form-label">Active Usage Time</label>
+                          <div class="input-group has-validation">
+                            <input type="text" class="form-control" id="year_active_usage" placeholder="Usage Time (max. 8760)" required>
+                            <div class="invalid-feedback">
+                              Usage Time is required.
+                            </div>
+                            <span class="input-group-text" id="ef_unit_year_active_time">Hour/Year</span>
+                          </div>
+                        </div>
+                        <div class="col auto" id="year_idle_group" style="display: none;">
+                          <label for="year_idle_usage" class="form-label">Idle Usage Time</label>
+                          <div class="input-group has-validation">
+                            <input type="text" class="form-control" id="year_idle_usage" placeholder="Usage Time (max. 8760)" required>
+                            <div class="invalid-feedback">
+                              Usage Time is required.
+                            </div>
+                            <span class="input-group-text" id="ef_unit_year_idle_time">Hour/Year</span>
+                          </div>
+                        </div>
+                        <div class="col auto" id="year_sleep_group" style="display: none;">
+                          <label for="year_sleep_usage" class="form-label">Sleep/StandBy Usage Time</label>
+                          <div class="input-group has-validation">
+                            <input type="text" class="form-control" id="year_sleep_usage" placeholder="Usage Time (max. 8760)" required>
+                            <div class="invalid-feedback">
+                              Usage Time is required.
+                            </div>
+                            <span class="input-group-text" id="ef_unit_year_sleep_time">Hour/Year</span>
+                          </div>
+                        </div>
+
+                        <div class="col auto" id="month_active_group" style="display: none;">
+                          <label for="month_active_usage" class="form-label">Active Usage Time</label>
+                          <div class="input-group has-validation">
+                            <input type="text" class="form-control" id="month_active_usage" placeholder="Usage Time (max. 730)" required>
+                            <div class="invalid-feedback">
+                              Usage Time is required.
+                            </div>
+                            <span class="input-group-text" id="ef_unit_month_active_time">Hour/Month</span>
+                          </div>
+                        </div>
+                        <div class="col auto" id="month_idle_group" style="display: none;">
+                          <label for="month_idle_usage" class="form-label">Idle Usage Time</label>
+                          <div class="input-group has-validation">
+                            <input type="text" class="form-control" id="month_idle_usage" placeholder="Usage Time (max. 730)" required>
+                            <div class="invalid-feedback">
+                              Usage Time is required.
+                            </div>
+                            <span class="input-group-text" id="ef_unit_month_idle_time">Hour/Month</span>
+                          </div>
+                        </div>
+                        <div class="col auto" id="month_sleep_group" style="display: none;">
+                          <label for="month_sleep_usage" class="form-label">Sleep/StandBy Usage Time</label>
+                          <div class="input-group has-validation">
+                            <input type="text" class="form-control" id="month_sleep_usage" placeholder="Usage Time (max. 730)" required>
+                            <div class="invalid-feedback">
+                              Usage Time is required.
+                            </div>
+                            <span class="input-group-text" id="ef_unit_month_sleep_time">Hour/Month</span>
+                          </div>
+                        </div>
+
+                        <div class="col auto" id="week_active_group" style="display: none;">
+                          <label for="week_active_usage" class="form-label">Active Usage Time</label>
+                          <div class="input-group has-validation">
+                            <input type="text" class="form-control" id="week_active_usage" placeholder="Usage Time (max. 168)" required>
+                            <div class="invalid-feedback">
+                              Usage Time is required.
+                            </div>
+                            <span class="input-group-text" id="ef_unit_week_active_time">Hour/Week</span>
+                          </div>
+                        </div>
+                        <div class="col auto" id="week_idle_group" style="display: none;">
+                          <label for="week_idle_usage" class="form-label">Idle Usage Time</label>
+                          <div class="input-group has-validation">
+                            <input type="text" class="form-control" id="week_idle_usage" placeholder="Usage Time (max. 168)" required>
+                            <div class="invalid-feedback">
+                              Usage Time is required.
+                            </div>
+                            <span class="input-group-text" id="ef_unit_week_idle_time">Hour/Week</span>
+                          </div>
+                        </div>
+                        <div class="col auto" id="week_sleep_group" style="display: none;">
+                          <label for="week_sleep_usage" class="form-label">Sleep/StandBy Usage Time</label>
+                          <div class="input-group has-validation">
+                            <input type="text" class="form-control" id="week_sleep_usage" placeholder="Usage Time (max. 168)" required>
+                            <div class="invalid-feedback">
+                              Usage Time is required.
+                            </div>
+                            <span class="input-group-text" id="ef_unit_week_sleep_time">Hour/Week</span>
+                          </div>
+                        </div>
+
+                        <div class="col auto" id="day_active_group" style="display: none;">
+                          <label for="day_active_usage" class="form-label">Active Usage Time</label>
+                          <div class="input-group has-validation">
+                            <input type="text" class="form-control" id="day_active_usage" placeholder="Usage Time (max. 168)" required>
+                            <div class="invalid-feedback">
+                              Usage Time is required.
+                            </div>
+                            <span class="input-group-text" id="ef_unit_day_active_time">Hour/Day</span>
+                          </div>
+                        </div>
+                        <div class="col auto" id="day_idle_group" style="display: none;">
+                          <label for="day_idle_usage" class="form-label">Idle Usage Time</label>
+                          <div class="input-group has-validation">
+                            <input type="text" class="form-control" id="day_idle_usage" placeholder="Usage Time (max. 168)" required>
+                            <div class="invalid-feedback">
+                              Usage Time is required.
+                            </div>
+                            <span class="input-group-text" id="ef_unit_day_idle_time">Hour/Day</span>
+                          </div>
+                        </div>
+                        <div class="col auto" id="day_sleep_group" style="display: none;">
+                          <label for="day_sleep_usage" class="form-label">Sleep/StandBy Usage Time</label>
+                          <div class="input-group has-validation">
+                            <input type="text" class="form-control" id="day_sleep_usage" placeholder="Usage Time (max. 168)" required>
+                            <div class="invalid-feedback">
+                              Usage Time is required.
+                            </div>
+                            <span class="input-group-text" id="ef_unit_day_sleep_time">Hour/Day</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  <button class="btn bg-gradient-dark mb-0" type="submit">Calculate Asset Emission Factors</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row" id="resultContainer" style="display:none;">
+        <div class="col-12">
+          <div class="card mb-4">
+            <div class="card-header pb-0">
+              <h6>Emission Factors Calculation Result</h6>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+              <div class="table-responsive p-0">
+                <table class="table align-items-center justify-content-center mb-0">
+                  <thead>
+                    <tr>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">IT Asset Subcategories</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">Variables</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">As-Is Emission Factors</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">Calculated Emission Factors</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+     
+      {% include "includes/footer.html" %}
+
+    </div>
+    
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    // Seluruh variabel yang digunakan
+    // Checklist
+    var differentiateIdleCheckbox = document.getElementById("include_idle");
+    var includeSleepCheckbox = document.getElementById("include_sleep");
+    // Option
+    var monthlyOption = document.getElementById("monthly");
+    var weeklyOption = document.getElementById("weekly");
+    var dailyOption = document.getElementById("daily");
+    // Power Consumption
+    var activeGroup = document.getElementById("active_group");
+    var idleGroup = document.getElementById("idle_group");
+    var sleepGroup = document.getElementById("sleep_group");
+    // Usage Time
+    var yearActiveGroup = document.getElementById("year_active_group");
+    var yearIdleGroup = document.getElementById("year_idle_group");
+    var yearSleepGroup = document.getElementById("year_sleep_group");
+    var monthActiveGroup = document.getElementById("month_active_group");
+    var monthIdleGroup = document.getElementById("month_idle_group");
+    var monthSleepGroup = document.getElementById("month_sleep_group");
+    var weekActiveGroup = document.getElementById("week_active_group");
+    var weekIdleGroup = document.getElementById("week_idle_group");
+    var weekSleepGroup = document.getElementById("week_sleep_group");
+    var dayActiveGroup = document.getElementById("day_active_group");
+    var dayIdleGroup = document.getElementById("day_idle_group");
+    var daySleepGroup = document.getElementById("day_sleep_group");
+    // Mendapatkan elemen ef_group
+    var efGroup = document.getElementById('ef_group');
+    var efValueInput = document.getElementById('ef_value');
+    // Mendapatkan elemen category dan sub_category
+    var categorySelect = document.getElementById('category');
+    var subCategorySelect = document.getElementById('sub_category');
+    // Mendapatkan elemen button
+    var calculateButton = document.querySelector('.btn.bg-gradient-dark.mb-0');
+    // Mengambil referensi ke elemen tabel
+    var tableBody = document.querySelector('.table tbody');
+
+    // Function untuk update nilai emission factors berdasarkan pilihan
+    function updateEfValue() {
+      var selectedCategory = categorySelect.value;
+      var selectedSubCategory = subCategorySelect.value;
+
+      // Mengirim permintaan ke server untuk mendapatkan ef_aset
+      var xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          var efAset = parseFloat(xhr.responseText);
+          efValueInput.value = efAset.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+      };
+      xhr.open('GET', '/get_ef_aset?category=' + encodeURIComponent(selectedCategory) + '&sub_category=' + encodeURIComponent(selectedSubCategory), true);
+      xhr.send();
+    }
+
+    // Fucntion untuk menampilkan subcategories berdasarkan category
+    function getSubcategories(categorySelect) {
+      var category = categorySelect.value;
+      var subCategorySelect = document.getElementById('sub_category');
+      
+      // Mengosongkan opsi saat ini
+      subCategorySelect.innerHTML = '<option selected disabled>Select IT Asset Subcategory</option>';
+  
+      // Mengambil data dari server menggunakan AJAX
+      fetch('/sub_category/' + encodeURIComponent(category))
+        .then(response => response.json())
+        .then(data => {
+          var subCategories = data.sub_categories;
+          // Menambahkan opsi IT Asset Subcategory ke select element
+          for (var i = 0; i < subCategories.length; i++) {
+            var option = document.createElement('option');
+            option.text = subCategories[i];
+            subCategorySelect.add(option);
+          }
+        });
+    }
+
+    // Function untuk menampilkan elemen-elemen yang sesuai dengan pilihan checkbox dan option
+    function showElements() {
+      activeGroup.style.display = "block";
+      idleGroup.style.display = "none";
+      sleepGroup.style.display = "none";
+      yearActiveGroup.style.display = "block";
+      yearIdleGroup.style.display = "none";
+      yearSleepGroup.style.display = "none";
+      monthActiveGroup.style.display = "none";
+      monthIdleGroup.style.display = "none";
+      monthSleepGroup.style.display = "none";
+      weekActiveGroup.style.display = "none";
+      weekIdleGroup.style.display = "none";
+      weekSleepGroup.style.display = "none";
+      dayActiveGroup.style.display = "none";
+      dayIdleGroup.style.display = "none";
+      daySleepGroup.style.display = "none";
+
+      if (differentiateIdleCheckbox.checked && !includeSleepCheckbox.checked) {
+        idleGroup.style.display = "block";
+        yearIdleGroup.style.display = "block";
+
+        if (monthlyOption.checked) {
+          monthActiveGroup.style.display = "block";
+          monthIdleGroup.style.display = "block";
+          yearActiveGroup.style.display = "none";
+          yearIdleGroup.style.display = "none";
+        } else if (weeklyOption.checked) {
+          weekActiveGroup.style.display = "block";
+          weekIdleGroup.style.display = "block";
+          yearActiveGroup.style.display = "none";
+          yearIdleGroup.style.display = "none";
+        } else if (dailyOption.checked) {
+          dayActiveGroup.style.display = "block";
+          dayIdleGroup.style.display = "block";
+          yearActiveGroup.style.display = "none";
+          yearIdleGroup.style.display = "none";
+        }
+      } else if (!differentiateIdleCheckbox.checked && includeSleepCheckbox.checked) {
+        sleepGroup.style.display = "block";
+        yearSleepGroup.style.display = "block";
+
+        if (monthlyOption.checked) {
+          monthActiveGroup.style.display = "block";
+          monthSleepGroup.style.display = "block";
+          yearActiveGroup.style.display = "none";
+          yearSleepGroup.style.display = "none";
+        } else if (weeklyOption.checked) {
+          weekActiveGroup.style.display = "block";
+          weekSleepGroup.style.display = "block";
+          yearActiveGroup.style.display = "none";
+          yearSleepGroup.style.display = "none";
+        } else if (dailyOption.checked) {
+          dayActiveGroup.style.display = "block";
+          daySleepGroup.style.display = "block";
+          yearActiveGroup.style.display = "none";
+          yearSleepGroup.style.display = "none";
+        }
+      } else if (differentiateIdleCheckbox.checked && includeSleepCheckbox.checked) {
+        idleGroup.style.display = "block";
+        sleepGroup.style.display = "block";
+        yearIdleGroup.style.display = "block";
+        yearSleepGroup.style.display = "block";
+
+        if (monthlyOption.checked) {
+          monthActiveGroup.style.display = "block";
+          monthIdleGroup.style.display = "block";
+          monthSleepGroup.style.display = "block";
+          yearActiveGroup.style.display = "none";
+          yearIdleGroup.style.display = "none";
+          yearSleepGroup.style.display = "none";
+        } else if (weeklyOption.checked) {
+          weekActiveGroup.style.display = "block";
+          weekIdleGroup.style.display = "block";
+          weekSleepGroup.style.display = "block";
+          yearActiveGroup.style.display = "none";
+          yearIdleGroup.style.display = "none";
+          yearSleepGroup.style.display = "none";
+        } else if (dailyOption.checked) {
+          dayActiveGroup.style.display = "block";
+          dayIdleGroup.style.display = "block";
+          daySleepGroup.style.display = "block";
+          yearActiveGroup.style.display = "none";
+          yearIdleGroup.style.display = "none";
+          yearSleepGroup.style.display = "none";
+        }
+      } else {
+        if (monthlyOption.checked) {
+          monthActiveGroup.style.display = "block";
+          yearActiveGroup.style.display = "none";
+        } else if (weeklyOption.checked) {
+          weekActiveGroup.style.display = "block";
+          yearActiveGroup.style.display = "none";
+        } else if (dailyOption.checked) {
+          dayActiveGroup.style.display = "block";
+          yearActiveGroup.style.display = "none";
+        }
+      }
+    }
+
+    // Function untuk menghitung emission factors
+    function calculateEmissionFactors() {
+      // Mendapatkan nilai input yang relevan
+      var activeValue = parseFloat(document.getElementById('active_value').value) || 0;
+      var idleValue = parseFloat(document.getElementById('idle_value').value) || 0;
+      var sleepValue = parseFloat(document.getElementById('sleep_value').value) || 0;
+      
+      var yearActiveUsage = parseFloat(document.getElementById('year_active_usage').value) || 0;
+      var yearIdleUsage = parseFloat(document.getElementById('year_idle_usage').value) || 0;
+      var yearSleepUsage = parseFloat(document.getElementById('year_sleep_usage').value) || 0;
+      
+      var monthActiveUsage = parseFloat(document.getElementById('month_active_usage').value) || 0;
+      var monthIdleUsage = parseFloat(document.getElementById('month_idle_usage').value) || 0;
+      var monthSleepUsage = parseFloat(document.getElementById('month_sleep_usage').value) || 0;
+      
+      var weekActiveUsage = parseFloat(document.getElementById('week_active_usage').value) || 0;
+      var weekIdleUsage = parseFloat(document.getElementById('week_idle_usage').value) || 0;
+      var weekSleepUsage = parseFloat(document.getElementById('week_sleep_usage').value) || 0;
+      
+      var dayActiveUsage = parseFloat(document.getElementById('day_active_usage').value) || 0;
+      var dayIdleUsage = parseFloat(document.getElementById('day_idle_usage').value) || 0;
+      var daySleepUsage = parseFloat(document.getElementById('day_sleep_usage').value) || 0;
+
+      // Variabel untuk menyimpan emission factors
+      var emissionFactors = 0;
+
+      // Memeriksa opsi yang dipilih dan menghitung emission factors
+      if (monthlyOption.checked) {
+        emissionFactors = ((activeValue * monthActiveUsage) + (idleValue * monthIdleUsage) + (sleepValue * monthSleepUsage)) * 12 / 1000;
+      } else if (weeklyOption.checked) {
+        emissionFactors = ((activeValue * weekActiveUsage) + (idleValue * weekIdleUsage) + (sleepValue * weekSleepUsage)) * 52 / 1000;
+      } else if (dailyOption.checked) {
+        emissionFactors = ((activeValue * dayActiveUsage) + (idleValue * dayIdleUsage) + (sleepValue * daySleepUsage)) * 365 / 1000;
+      } else {
+        emissionFactors = ((activeValue * yearActiveUsage) + (idleValue * yearIdleUsage) + (sleepValue * yearSleepUsage)) / 1000;
+      }
+
+      // Menampilkan emission factors
+      return emissionFactors;
+    }
+
+    // Function untuk mengembalikan dari string ke numerik
+    function reverseLocaleString(formattedString) {
+      // Hapus karakter non-digit
+      var cleanedString = formattedString.replace(/[^\d.-]/g, '');
+      // Hapus pemisah ribuan
+      cleanedString = cleanedString.replace(/,/g, '');
+      // Konversi ke tipe numerik
+      var number = parseFloat(cleanedString);
+      return number;
+    }
+    
+    // Function untuk menambahkan row baru ke dalam tabel
+    function addTableRow(event) {
+      event.preventDefault(); // Menghentikan perilaku default tombol submit
+      var resultContainer = document.getElementById("resultContainer");
+      resultContainer.style.display = "block";
+      // Mengambil nilai IT Asset Subcategory dari elemen select
+      var subCategory = subCategorySelect.value;
+
+      // Mengambil nilai As-Is Emission Factors dari elemen input
+      var asIsEmissionFactorsFormatted = efValueInput.value;
+
+      // Mengambil nilai Calculated Emission Factors dari fungsi calculateEmissionFactors
+      var calculatedEmissionFactors = calculateEmissionFactors();
+      var calculatedEmissionFactorsFormatted = calculatedEmissionFactors.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      // Membuat elemen-elemen HTML untuk setiap kolom dalam row baru
+      var row = document.createElement('tr');
+      var subCategoryCell = document.createElement('td');
+      var variablesCell = document.createElement('td');
+      var asIsEmissionFactorsCell = document.createElement('td');
+      var calculatedEmissionFactorsCell = document.createElement('td');
+
+      var statusText = '';
+      var statusColor = '';
+      var statusColor = '';
+      var statusMsg = '';
+      
+      if (calculatedEmissionFactors > reverseLocaleString(asIsEmissionFactorsFormatted)) {
+        statusText = 'Emission Factor <strong>Lebih Tinggi</strong>';
+        statusColor = 'danger';
+        statusNum = " sebesar " +(calculatedEmissionFactors - reverseLocaleString(asIsEmissionFactorsFormatted)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " kWh/Year";
+        statusMsg = "Pertimbangkan Kembali Variabel Masukan Anda!"
+      } else if (calculatedEmissionFactors < reverseLocaleString(asIsEmissionFactorsFormatted)) {
+        statusText = 'Emission Factor <strong>Lebih Rendah</strong>';
+        statusColor = 'success';
+        statusNum = " sebesar " + (reverseLocaleString(asIsEmissionFactorsFormatted) - calculatedEmissionFactors).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " kWh/Year";
+        statusMsg = "Jika sesuai, Anda dapat mengubahnya di Data View"
+      } else {
+        statusText = 'Emission Factor <strong>Sama</strong> dengan Kondisi Saat Ini';
+        statusColor = 'info';
+        statusNum = '';
+        statusMsg = '';
+      }
+      
+      // Mengatur teks dalam elemen-elemen
+      subCategoryCell.innerHTML = '<div class="d-flex px-2"><div class="my-auto"><h6 class="text-sm">' + subCategory + '</h6></div></div>';
+      variablesCell.innerHTML = '';
+      asIsEmissionFactorsCell.innerHTML = '<span class="text-sm font-weight-bold align-items-center justify-content-center">' + asIsEmissionFactorsFormatted + ' kWh/Year</span>';
+      asIsEmissionFactorsCell.style.textAlign = "center";
+      calculatedEmissionFactorsCell.innerHTML = '<div class="d-flex flex-column align-items-center justify-content-center"><span class="me-2 text-s font-weight-bold">' + calculatedEmissionFactorsFormatted + ' kWh/Year</span><div class="d-flex align-items-center justify-content-center"><span class="me-2 text-xs font-weight-bold text-' + statusColor + '">' + statusText + statusNum + '<br>' + statusMsg + '</span></div></div>';
+      calculatedEmissionFactorsCell.style.textAlign = "center";
+
+      // Mengurus variablesCell
+      var activeValue = parseFloat(document.getElementById('active_value').value) || 0;
+      var idleValue = parseFloat(document.getElementById('idle_value').value) || 0;
+      var sleepValue = parseFloat(document.getElementById('sleep_value').value) || 0;
+      
+      var yearActiveUsage = parseFloat(document.getElementById('year_active_usage').value) || 0;
+      var yearIdleUsage = parseFloat(document.getElementById('year_idle_usage').value) || 0;
+      var yearSleepUsage = parseFloat(document.getElementById('year_sleep_usage').value) || 0;
+      
+      var monthActiveUsage = parseFloat(document.getElementById('month_active_usage').value) || 0;
+      var monthIdleUsage = parseFloat(document.getElementById('month_idle_usage').value) || 0;
+      var monthSleepUsage = parseFloat(document.getElementById('month_sleep_usage').value) || 0;
+      
+      var weekActiveUsage = parseFloat(document.getElementById('week_active_usage').value) || 0;
+      var weekIdleUsage = parseFloat(document.getElementById('week_idle_usage').value) || 0;
+      var weekSleepUsage = parseFloat(document.getElementById('week_sleep_usage').value) || 0;
+      
+      var dayActiveUsage = parseFloat(document.getElementById('day_active_usage').value) || 0;
+      var dayIdleUsage = parseFloat(document.getElementById('day_idle_usage').value) || 0;
+      var daySleepUsage = parseFloat(document.getElementById('day_sleep_usage').value) || 0;
+      
+      if (activeValue !== 0) {
+        variablesCell.innerHTML += '<span class="text-sm font-weight-bold">Active Power: ' + activeValue.toFixed(2) + ' Watt/Unit</span><br>';
+      }
+      if (yearActiveUsage !== 0) {
+        variablesCell.innerHTML += '<span class="text-sm font-weight-bold">Active Time: ' + yearActiveUsage.toFixed(2) + ' Hour/Year</span><br>';
+      }
+      if (monthActiveUsage !== 0) {
+        variablesCell.innerHTML += '<span class="text-sm font-weight-bold">Active Time: ' + monthActiveUsage.toFixed(2) + ' Hour/Month</span><br>';
+      }
+      if (weekActiveUsage !== 0) {
+        variablesCell.innerHTML += '<span class="text-sm font-weight-bold">Active Time: ' + weekActiveUsage.toFixed(2) + ' Hour/Week</span><br>';
+      }
+      if (dayActiveUsage !== 0) {
+        variablesCell.innerHTML += '<span class="text-sm font-weight-bold">Active Time: ' + dayActiveUsage.toFixed(2) + ' Hour/Day</span><br>';
+      }
+
+      if (idleValue !== 0) {
+        variablesCell.innerHTML += '<br><span class="text-sm font-weight-bold">Idle Power: ' + idleValue.toFixed(2) + ' Watt/Unit</span><br>';
+      }
+      if (yearIdleUsage !== 0) {
+        variablesCell.innerHTML += '<span class="text-sm font-weight-bold">Idle Time: ' + yearIdleUsage.toFixed(2) + ' Hour/Year</span><br>';
+      }
+      if (monthIdleUsage !== 0) {
+        variablesCell.innerHTML += '<span class="text-sm font-weight-bold">Idle Time: ' + monthIdleUsage.toFixed(2) + ' Hour/Month</span><br>';
+      }
+      if (weekIdleUsage !== 0) {
+        variablesCell.innerHTML += '<span class="text-sm font-weight-bold">Idle Time: ' + weekIdleUsage.toFixed(2) + ' Hour/Week</span><br>';
+      }
+      if (dayIdleUsage !== 0) {
+        variablesCell.innerHTML += '<span class="text-sm font-weight-bold">Idle Time: ' + dayIdleUsage.toFixed(2) + ' Hour/Day</span><br>';
+      }
+
+      if (sleepValue !== 0) {
+        variablesCell.innerHTML += '<br><span class="text-sm font-weight-bold">Sleep Power: ' + sleepValue.toFixed(2) + ' Watt/Unit</span><br>';
+      }
+      if (yearSleepUsage !== 0) {
+        variablesCell.innerHTML += '<span class="text-sm font-weight-bold">Sleep Time: ' + yearSleepUsage.toFixed(2) + ' Hour/Year</span><br>';
+      }
+      if (monthSleepUsage !== 0) {
+        variablesCell.innerHTML += '<span class="text-sm font-weight-bold">Sleep Time: ' + monthSleepUsage.toFixed(2) + ' Hour/Month</span><br>';
+      }
+      if (weekSleepUsage !== 0) {
+        variablesCell.innerHTML += '<span class="text-sm font-weight-bold">Sleep Time: ' + weekSleepUsage.toFixed(2) + ' Hour/Week</span><br>';
+      }
+      if (daySleepUsage !== 0) {
+        variablesCell.innerHTML += '<span class="text-sm font-weight-bold">Sleep Time: ' + daySleepUsage.toFixed(2) + ' Hour/Day</span><br>';
+      }      
+
+      // Menggabungkan elemen-elemen ke dalam row
+      row.appendChild(subCategoryCell);
+      row.appendChild(variablesCell);
+      row.appendChild(asIsEmissionFactorsCell);
+      row.appendChild(calculatedEmissionFactorsCell);
+
+      // Memasukkan row ke dalam tabel
+      tableBody.prepend(row);
+
+      document.querySelector('form').reset();
+      activeGroup.style.display = "block";
+      idleGroup.style.display = "none";
+      sleepGroup.style.display = "none";
+      yearActiveGroup.style.display = "block";
+      yearIdleGroup.style.display = "none";
+      yearSleepGroup.style.display = "none";
+      monthActiveGroup.style.display = "none";
+      monthIdleGroup.style.display = "none";
+      monthSleepGroup.style.display = "none";
+      weekActiveGroup.style.display = "none";
+      weekIdleGroup.style.display = "none";
+      weekSleepGroup.style.display = "none";
+      dayActiveGroup.style.display = "none";
+      dayIdleGroup.style.display = "none";
+      daySleepGroup.style.display = "none";
+    }
+
+    // Script untuk mengatur kondisi dalam form
+    // Mengatur ef_group menjadi read-only
+    efValueInput.readOnly = true;
+    // Menambahkan event listener untuk perubahan pada category dan sub_category
+    categorySelect.addEventListener('change', updateEfValue);
+    subCategorySelect.addEventListener('change', updateEfValue);
+    // Memanggil fungsi showElements saat checkbox atau option berubah
+    differentiateIdleCheckbox.addEventListener("change", showElements);
+    includeSleepCheckbox.addEventListener("change", showElements);
+    monthlyOption.addEventListener("click", showElements);
+    weeklyOption.addEventListener("click", showElements);
+    dailyOption.addEventListener("click", showElements);
+
+    // Menjalankan fungsi showElements untuk menampilkan elemen-elemen awal
+    showElements();
+
+    // Menambahkan event listener saat button diklik
+    calculateButton.addEventListener('click', function(event) {
+      var isCategoryValid = categorySelect.value !== 'Select IT Asset Category';
+      var isSubCategoryValid = subCategorySelect.value !== 'Select IT Asset Subcategory';
+      var isVariablesValid = true;
+
+      var activeValue = parseFloat(document.getElementById('active_value').value) || 0;
+      var idleValue = parseFloat(document.getElementById('idle_value').value) || 0;
+      var sleepValue = parseFloat(document.getElementById('sleep_value').value) || 0;
+      
+      var yearActiveUsage = parseFloat(document.getElementById('year_active_usage').value) || 0;
+      var yearIdleUsage = parseFloat(document.getElementById('year_idle_usage').value) || 0;
+      var yearSleepUsage = parseFloat(document.getElementById('year_sleep_usage').value) || 0;
+      
+      var monthActiveUsage = parseFloat(document.getElementById('month_active_usage').value) || 0;
+      var monthIdleUsage = parseFloat(document.getElementById('month_idle_usage').value) || 0;
+      var monthSleepUsage = parseFloat(document.getElementById('month_sleep_usage').value) || 0;
+      
+      var weekActiveUsage = parseFloat(document.getElementById('week_active_usage').value) || 0;
+      var weekIdleUsage = parseFloat(document.getElementById('week_idle_usage').value) || 0;
+      var weekSleepUsage = parseFloat(document.getElementById('week_sleep_usage').value) || 0;
+      
+      var dayActiveUsage = parseFloat(document.getElementById('day_active_usage').value) || 0;
+      var dayIdleUsage = parseFloat(document.getElementById('day_idle_usage').value) || 0;
+      var daySleepUsage = parseFloat(document.getElementById('day_sleep_usage').value) || 0;
+
+      if (activeValue === 0 && idleValue === 0 && sleepValue === 0 &&
+            yearActiveUsage === 0 && yearIdleUsage === 0 && yearSleepUsage === 0 &&
+            monthActiveUsage === 0 && monthIdleUsage === 0 && monthSleepUsage === 0 &&
+            weekActiveUsage === 0 && weekIdleUsage === 0 && weekSleepUsage === 0 &&
+            dayActiveUsage === 0 && dayIdleUsage === 0 && daySleepUsage === 0) {
+          isVariablesValid = false;
+        }
+      if (!isCategoryValid || !isSubCategoryValid || !isVariablesValid) {
+        event.preventDefault();
+        alert('Silakan isi semua field yang diperlukan sebelum menghitung.');
+        return;
+      } else {
+        addTableRow(event);
+      }
+    });
+
+  </script>
+  
+{% endblock javascripts %}
+

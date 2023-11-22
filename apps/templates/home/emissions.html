@@ -1,0 +1,160 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Asset Emissions {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}
+{% endblock stylesheets %}
+
+{% block content %}
+
+    <div class="container-fluid py-4">
+      <div class="row">
+        <div class="col-12">
+          <div class="card mb-4">
+            <div class="card-header pb-0">
+              <div class="d-flex align-items-center">
+                <h6 class="me-2 flex-grow-1">Asset Emissions Table</h6>
+                <div class="d-flex nav-item dropdown">
+                  <a class="dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false"></a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="/asset_data">Asset Data</a></li>
+                    <li><a class="dropdown-item" href="/emissions">Asset Emissions</a></li>
+                    <li><a class="dropdown-item" href="/locations">Locations</a></li>
+                    <li><a class="dropdown-item" href="/emission_factors">Emissions Factors</a></li>
+                    <li><a class="dropdown-item" href="/asset_categories">Asset Category</a></li>
+                  </ul>
+                </div>
+                <div class="input-group mt-3 justify-content-end">
+                  <div class="row">
+                    <div class="col-auto">
+                    <form class="d-flex" method="POST" role="search">
+                      <div class="input-group">
+                          <select class="form-select form-select-sm text-body" id="searchBy" name="searchBy" aria-label="Search by" required>
+                            <option selected disabled>Select an option</option>
+                            <option value="tahun_perolehan">Procurement Year</option>
+                            <option value="category_name">Category</option>
+                            <option value="sub_category_name">Sub-category</option>
+                            <option value="jumlah_unit">Total Units</option>
+                            <option value="energy">Energy</option>
+                            <option value="cost">Cost</option>
+                            <option value="carbon">Carbon</option>
+                          </select>
+                          <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
+                          <input type="text" class="form-control w-15" id="searchText" name="searchText" placeholder="Type here..." required>
+                        </div>
+                      </div>
+                      <div class="col-auto">
+                          <button type="submit" class="btn bg-gradient-primary mb-0" id="searchButton">Search</button>
+                      </div>
+                    </form>
+                  </div>                
+                </div>             
+              </div>
+              <div style="text-align: center;">
+                <h6 class="me-2 flex-grow-1">Category Asset</h6>
+              </div>              
+              <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                  <table class="table align-items-center justify-content-center mb-0">
+                    <thead>
+                      <tr>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Procurement Year</th>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Category</th>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Total Units</th>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Energy/Year</th>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cost/Year</th>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Carbon/Year</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for emissions in category_emissions.items %}
+                        <tr>
+                          <td class="text-sm font-weight-bold mb-0 ms-2">{{ emissions[0] }}</td>
+                          <td class="text-sm font-weight-bold mb-0">{{ emissions[1] }}</td>
+                          <td class="text-sm font-weight-bold mb-0">{{ emissions[2] }}</td>
+                          <td class="text-sm font-weight-bold mb-0">{{ emissions[3] }} kWh</td>
+                          <td class="text-sm font-weight-bold mb-0">Rp {{ emissions[4] }}</td>
+                          <td class="text-sm font-weight-bold mb-0">{{ emissions[5] }} kgCO2e</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>                    
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="card-header pb-0">
+              <div style="text-align: center;">
+                <h6 class="me-2 flex-grow-1">Subcategory Asset</h6>
+              </div>
+              <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                  <table class="table align-items-center justify-content-center mb-0">
+                    <thead>
+                      <tr>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Procurement Year</th>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Subcategory</th>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Total Units</th>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Energy/Year</th>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cost/Year</th>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Carbon/Year</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for emissions in emissions.items %}
+                        <tr>
+                          <td class="text-sm font-weight-bold mb-0 ms-2">{{ emissions[0] }}</td>
+                          <td class="text-sm font-weight-bold mb-0">{{ emissions[1] }}</td>
+                          <td class="text-sm font-weight-bold mb-0">{{ emissions[2] }}</td>
+                          <td class="text-sm font-weight-bold mb-0">{{ emissions[3] }} kWh</td>
+                          <td class="text-sm font-weight-bold mb-0">Rp {{ emissions[4] }}</td>
+                          <td class="text-sm font-weight-bold mb-0">{{ emissions[5] }} kgCO2e</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>                    
+                  </table>
+                </div>
+              </div>
+                
+              
+            <div class="card-footer">
+              <nav aria-label="Locations Pagination">
+                <ul class="pagination justify-content-center mb-0">
+                  {% if category_emissions.has_prev and emissions.has_prev %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ category_emissions.prev_num }}">Prev</a>
+                    </li>
+                  {% endif %}
+                  {% for num in category_emissions.iter_pages(left_edge=1, left_current=1, right_current=2, right_edge=1) %}
+                    {% if num %}
+                      {% if category_emissions.page == num %}
+                        <li class="page-item active" aria-current="page">
+                          <a class="page-link" href="?page={{ num }}"><strong>{{ num }}</strong></a>
+                        </li>
+                      {% else %}
+                        <li class="page-item">
+                          <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                      {% endif %}
+                    {% else %}
+                      <li class="page-item disabled">
+                        <span class="page-link">&hellip;</span>
+                      </li>
+                    {% endif %}
+                  {% endfor %}
+                  {% if category_emissions.has_next and emissions.has_next %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ category_emissions.next_num }}">Next</a>
+                    </li>
+                  {% endif %}
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+        {% include "includes/footer.html" %}
+      </div>
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}{% endblock javascripts %}

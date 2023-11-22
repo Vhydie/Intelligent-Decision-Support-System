@@ -1,0 +1,767 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Units Model View {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+    <div class="container-fluid py-4">
+
+      <div class="row">
+        <div class="col-12">
+          <div class="card mb-4"> 
+            <div class="card-header pb-0">
+              <div class="d-flex align-items-center justify-content-end">
+                <h6 class="me-2 mt-2">IT Asset Category Units</h6>
+                <div class="d-flex nav-item dropdown">
+                  <a class="dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false"></a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="/model_units_view">Units Model View</a></li>
+                    <li><a class="dropdown-item" href="/model_asset_calculation">Emissions Model View</a></li>
+                  </ul>
+                </div>
+              </div>
+              <div style="text-align: center;">
+                <h5>As-Is IT Asset Unit Count based on IT Asset Category</h5>
+              </div>
+              <div class="row">
+                <div class="col-lg-8">
+                  <div class="card z-index-2 mb-4">
+                    <div class="card-body p-3"> 
+                      <div class="border-radius-lg py-3 pe-1 mb-0">
+                        <div class="d-flex justify-content-start align-items-center">
+                          <h6 class="mb-3">IT Asset Counts Chart</h5>
+                          <div class="dropdown ms-auto">
+                            <button id="dropdownButton_year1" class="btn btn-sm text-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
+                            <ul class="dropdown-menu">
+                              <li><a class="dropdown-item" href="#" onclick="updateButton_year1('Last 15 Years'); updateInformation1('Last 15 Years');">Last 15 Years</a></li>
+                              <li><a class="dropdown-item" href="#" onclick="updateButton_year1('Last 10 Years'); updateInformation1('Last 10 Years');">Last 10 Years</a></li>
+                              <li><a class="dropdown-item" href="#" onclick="updateButton_year1('Last 5 Years'); updateInformation1('Last 5 Years');">Last 5 Years</a></li>
+                            </ul>
+                          </div>
+                        </div>                        
+                        <div class="chart">
+                          <canvas id="chart-bar1" class="chart-canvas" height="400"></canvas>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-4">
+                  <div class="card h-auto mb-3">
+                    <div class="card-header pb-0 p-3">
+                      <div class="row">
+                        <div class="col-6 d-flex align-items-center">
+                          <h6 class="mb-0">Asset Count</h6>
+                        </div>
+                        <div class="col-6 text-end">
+                          <a class="btn btn-outline-primary btn-sm mb-0"  href="/asset_data">View All</a>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="card-body p-3 pb-0">
+                      <ul class="list-group">
+                        <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
+                          <div class="d-flex flex-column">
+                            <h6 class="mb-1 text-dark font-weight-bold text-sm" id="dataContainer1"></h6>
+                            <span class="text-dark text-xs" id="dataContainer2"></span>
+                          </div>
+                          <div class="d-flex align-items-center text-sm">
+                            <h6 class="text-dark" id="dataContainer3"></h6>
+                          </div>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div class="card h-auto">
+                    <div class="card-header pb-0 p-3">
+                      <div class="d-flex align-items-center">
+                        <h6 class="mb-0">Asset Count Pie Chart</h6>
+                      </div>
+                    </div>
+                    <div class="card-body p-3 pb-0" >
+                      <h6 class="mb-1 text-dark font-weight-bold text-sm" id="dataContainer4"></h6>
+                      <div class="chart">
+                        <canvas id="chart-pie1" class="chart-canvas" height="200"></canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-12">
+          <div class="card mb-4"> 
+            <div class="card-header pb-0">
+              <div class="d-flex align-items-center justify-content-end">
+                <h6 class="me-2 mt-2">IT Asset Subcategory Units</h6>
+                <div class="d-flex nav-item dropdown">
+                  <a class="dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false"></a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="/model_units_view">Units Model View</a></li>
+                    <li><a class="dropdown-item" href="/model_asset_calculation">Emissions Model View</a></li>
+                  </ul>
+                </div>
+              </div>
+              <div style="text-align: center;">
+                <h5>As-Is IT Asset Unit Count based on IT Asset Subcategory</h5>
+              </div>
+              <div class="row">
+                <div class="col-lg-8">
+                  <div class="card z-index-2 mb-4">
+                    <div class="card-body p-3"> 
+                      <div class="border-radius-lg py-3 pe-1 mb-0">
+                        <div class="d-flex justify-content-start align-items-center">
+                          <h6 class="mb-3">IT Asset Counts Chart</h5>
+                          <div class="dropdown ms-auto">
+                            <button id="dropdownButton_category2" class="btn btn-sm text-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
+                            <ul class="dropdown-menu">
+                              {% for category in categories %}
+                                <li><a class="dropdown-item" href="#" onclick="updateButton_category2('{{ category }}'); updateInformation2('{{ category }}');">{{ category }}</a></li>
+                              {% endfor %}
+                            </ul>
+                          </div>
+                          <div class="dropdown ms-2">
+                            <button id="dropdownButton_year2" class="btn btn-sm text-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
+                            <ul class="dropdown-menu">
+                              <li><a class="dropdown-item" href="#" onclick="updateButton_year2('Last 15 Years'); updateInformation3('Last 15 Years');">Last 15 Years</a></li>
+                              <li><a class="dropdown-item" href="#" onclick="updateButton_year2('Last 10 Years'); updateInformation3('Last 10 Years');">Last 10 Years</a></li>
+                              <li><a class="dropdown-item" href="#" onclick="updateButton_year2('Last 5 Years'); updateInformation3('Last 5 Years');">Last 5 Years</a></li>
+                            </ul>
+                          </div>
+                        </div>
+                        <div class="chart">
+                          <canvas id="chart-bar2" class="chart-canvas" height="570"></canvas>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-4">
+                  <div class="card h-auto mb-3">
+                    <div class="card-header pb-0 p-3">
+                      <div class="row">
+                        <div class="col-6 d-flex align-items-center">
+                          <h6 class="mb-0">Asset Count</h6>
+                        </div>
+                        <div class="col-6 text-end">
+                          <a class="btn btn-outline-primary btn-sm mb-0" href="/asset_data">View All</a>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="card-body p-3 pb-0">
+                      <ul class="list-group">
+                        <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
+                          <div class="d-flex flex-column">
+                            <h6 class="mb-1 text-dark font-weight-bold text-sm" id="dataContainer5"></h6>
+                            <span class="text-dark text-xs" id="dataContainer6"></span>
+                          </div>
+                          <div class="d-flex align-items-center text-sm">
+                            <h6 class="text-dark" id="dataContainer7"></h6>
+                          </div>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div class="card h-auto">
+                    <div class="card-header pb-0 p-3">
+                      <div class="d-flex align-items-center">
+                        <h6 class="mb-0">Asset Count Pie Chart</h6>
+                      </div>
+                    </div>
+                    <div class="card-body p-3 pb-0" >
+                      <div>
+                        <h6 class="mb-1 text-dark font-weight-bold text-sm" id="dataContainer8"></h6>
+                      </div>
+                      <div class="chart">
+                        <canvas id="chart-pie2" class="chart-canvas" height="300"></canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% include "includes/footer.html" %}
+
+    </div>
+    
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}
+  <script src="{{ config.ASSETS_ROOT }}/js/plugins/chartjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <script>
+    // Inisialisasi JavaScript di awal Loading Page
+    document.addEventListener("DOMContentLoaded", function() {
+      updateButton_year1('Last 15 Years');
+      updateInformation1('Last 15 Years');
+      update_all_chart1('Komputer', 'Last 15 Years');
+      updateInformation2('Komputer');
+    });
+    // Data untuk bar chart
+    var total_units_dataset = {{ total_unit_by_category_last_15_years | tojson }};
+    var latest_year = parseInt({{ latest_year }});
+    var last_15_year = parseInt({{ last_15_year }});
+    var last_10_year = parseInt({{ last_10_year }});
+    var last_5_year = parseInt({{ last_5_year }});
+    var categories = {{ categories|tojson }};
+    
+    // Function untuk kedua chart
+    // Function untuk kedua chart
+    // Function untuk kedua chart
+    // Function untuk mendapatkan total data
+    function getTotalData(datasets) {
+      var totalData = [];
+      for (var i = 0; i < datasets[0].data.length; i++) {
+        var total = 0;
+        for (var j = 0; j < datasets.length; j++) {
+          if (datasets[j].type === "bar") {
+            total += datasets[j].data[i];
+          }
+        }
+        totalData.push(total);
+      }
+      return totalData;
+    }
+
+    // Function pembuatan bar chart 
+    function updateChart1(result, ctx) {
+      // Mengambil years yang unik
+      var years = new Set();
+      var categories = new Set();
+      for (var i = 0; i < result.length; i++) {
+        var item = result[i][0];
+        var cat = result[i][1];
+        years.add(item);
+        categories.add(cat);
+      }
+
+      var uniqueYears = Array.from(years);
+      var uniqueCategories = Array.from(categories);
+      var colorScheme = ["#FF4A4A", "#4AFF4A", "#4A4AFF", "#ffdb78", "#FF4AFF", "#4AFFFF", "#FFA94A", "#FFB6C1", "#FFDAB9", "#87CEEB", "#98FB98", "#FFA07A", "#FFC0CB", "#AFEEEE", "#D8BFD8", "#F0E68C"];
+      // Mengubah dataset berdasarkan hasil
+      var datasets = [];
+      var n = 0;
+      for (var j = 0; j < uniqueCategories.length; j++) {
+        var total_jumlah_unit = []
+        for (var i = 0; i < uniqueYears.length; i++) {
+          var tahun_perolehan = result[n][0]
+          var category_name = result[n][1]
+          total_jumlah_unit.push(result[n][2]);
+          n += 1
+        }
+        var dataset = {
+          label: category_name,
+          type: "bar",
+          tension: 0.4,
+          borderWidth: 0,
+          borderRadius: 4,
+          borderSkipped: false,
+          maxBarThickness: 6,
+          backgroundColor: colorScheme[j],
+          data: total_jumlah_unit, // Perhatikan bahwa data harus berupa array
+        };    
+        datasets.push(dataset);
+      }
+      // Tambahkan dataset untuk data total
+      datasets.push({
+        label: "Total",
+        type: "line",
+        tension: 0.4,
+        borderRadius: 2,
+        borderSkipped: false,
+        maxBarThickness: 3,
+        borderColor: "#FF7F7F", // Ubah dengan warna pastel yang diinginkan
+        borderDash: [5, 5], // Menambahkan garis putus-putus
+        pointBackgroundColor: "red",
+        data: getTotalData(datasets), // Isi dengan data yang sesuai, seperti total penjumlahan semua jumlah_unit
+      });
+      
+      return new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: uniqueYears,
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              align: 'middle', // Mengatur perataan legenda ke kanan
+              position: 'bottom', // Menempatkan legenda di atas grafik
+              labels: {
+                boxWidth: 10, // Ubah dengan ukuran lebar box legenda yang diinginkan
+                boxHeight: 10,
+              }
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index',
+          },
+          scales: {
+            y: {
+              stacked: true,
+              grid: {
+                drawBorder: false,
+                display: true,
+                drawOnChartArea: true,
+                drawTicks: false,
+              },
+              ticks: {
+                suggestedMin: 0,
+                suggestedMax: 500,
+                beginAtZero: true,
+                padding: 15,
+                font: {
+                  size: 14,
+                  family: "Open Sans",
+                  style: 'normal',
+                  lineHeight: 2
+                },
+                color: "#000000"
+              },
+            },
+            x: {
+              stacked: true,
+              grid: {
+                drawBorder: false,
+                display: false,
+                drawOnChartArea: false,
+                drawTicks: false
+              },
+              ticks: {
+                display: true,
+                color: "#000000", 
+                font: {
+                  size: 11,
+                  family: "Open Sans",
+                  style: 'normal',
+                  lineHeight: 2
+                }
+              },
+            },
+          },
+        },
+      });      
+      
+    }
+
+    // Function pembuatan pie chart 
+    function updateChart2(result,ctx) {
+      // Mengambil kategori yang unik
+      var data = [];
+      var labels = [];
+      var counts = 0;
+      for (var i = 0; i < result.length; i++) {
+        var count = result[i][1];
+        counts += count;
+      }
+      for (var i = 0; i < result.length; i++) {
+        var item = result[i][0];
+        var count = result[i][1];
+        labels.push(item);
+        data.push(count / counts * 100);
+      }
+      
+      // Mengubah dataset berdasarkan hasil
+      var colorScheme = ["#FF4A4A", "#4AFF4A", "#4A4AFF", "#ffdb78", "#FF4AFF", "#4AFFFF", "#FFA94A", "#FFB6C1", "#FFDAB9", "#87CEEB", "#98FB98", "#FFA07A", "#FFC0CB", "#AFEEEE", "#D8BFD8", "#F0E68C"];
+      var data_used = {
+        labels: labels,
+        datasets: [
+          {
+            data: data,
+            backgroundColor: colorScheme,
+          }
+        ]
+      };
+      return new Chart(ctx, {
+        type: "pie",
+        data: data_used,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              align: 'middle',
+              position: 'bottom',
+              labels: {
+                boxWidth: 10,
+                boxHeight: 10,
+              }
+            }
+          },
+        },
+      });
+    }
+
+    
+    // Pembuatan bar & pie chart pertama (category)
+    // Pembuatan bar & pie chart pertama (category)
+    // Pembuatan bar & pie chart pertama (category)
+    // Data untuk bar chart pertama
+    data_bar1 = aggregateBarData(total_units_dataset, last_15_year);
+    var ctx1 = document.getElementById("chart-bar1").getContext("2d");
+    window.myChart1 = updateChart1(data_bar1, ctx1);
+    
+    // Data untuk pie chart pertama
+    data_pie1 = aggregatePieData(total_units_dataset, last_15_year);
+    var ctx2 = document.getElementById("chart-pie1").getContext("2d");
+    window.myChart2 = updateChart2(data_pie1, ctx2);
+
+    // Function untuk filter data by year
+    function filterDataByYear(data, year) {
+      return data.filter(function(sublist) {
+        return sublist[0] >= year;
+      });
+    }
+    
+    // Function untuk menghasilkan data agregasi yang digunakan untuk barchart berdasarkan batasan tahun
+    function aggregateBarData(data, year) {
+      var filteredData = filterDataByYear(data, year);
+      var groupedSum = {};
+      var aggregatedData = [];
+    
+      filteredData.forEach(function(sublist) {
+        var key = sublist[0] + '-' + sublist[1];
+        if (groupedSum.hasOwnProperty(key)) {
+          groupedSum[key] += sublist[3];
+        } else {
+          groupedSum[key] = sublist[3];
+        }
+      });
+    
+      for (var key in groupedSum) {
+        var keys = key.split('-');
+        var sublist = [parseInt(keys[0]), keys[1], groupedSum[key]];
+        aggregatedData.push(sublist);
+      }
+    
+      return aggregatedData;
+    }
+    
+    // Function untuk menghasilkan menghasilkan data agregasi yang digunakan untuk piechart berdasarkan batasan tahun
+    function aggregatePieData(data, year) {
+      var filteredData = filterDataByYear(data, year);
+      var groupedSum = {};
+      var aggregatedData = [];
+    
+      filteredData.forEach(function(sublist) {
+        var key = sublist[1];
+        if (groupedSum.hasOwnProperty(key)) {
+          groupedSum[key] += sublist[3];
+        } else {
+          groupedSum[key] = sublist[3];
+        }
+      });
+    
+      for (var key in groupedSum) {
+        var sublist = [key, groupedSum[key]];
+        aggregatedData.push(sublist);
+      }
+      
+      return aggregatedData;
+    }
+    
+    // Function untuk mendapatkan total unit per category berdasarkan batasan tahun    
+    function get_total_category_unit(data, year, category_name) {
+      var total_units = 0;
+      for (var i = 0; i < data.length; i++) {
+        var result = data[i];
+        var year_perolehan = result[0];
+        var category = result[1];
+        var jumlah_unit = parseInt(result[3]);
+    
+        if (year_perolehan >= year && category === category_name) {
+          total_units += jumlah_unit;
+        }
+      }
+    
+      return total_units;
+    }
+
+    // Function untuk update informasi jumlah total unit
+    function updateInformation1(selectedYear) {
+      document.getElementById('dropdownButton_year1').textContent = selectedYear;
+      if (selectedYear === 'Last 15 Years') {
+        var year = last_15_year;
+      } else if (selectedYear === 'Last 10 Years') {
+        var year = last_10_year;
+      } else if (selectedYear === 'Last 5 Years') {
+        var year = last_5_year;
+      }
+      document.getElementById('dataContainer1').innerHTML = "From " + year + " to " + latest_year;
+      document.getElementById('dataContainer4').innerHTML = "From " + year + " to " + latest_year;
+      var container2 = document.getElementById('dataContainer2');
+      container2.innerHTML = '';
+      var total_units = 0;
+      for (var i = 0; i < categories.length; i++) {
+        var total_unit = get_total_category_unit(total_units_dataset, year, categories[i]);
+        total_units += parseInt(total_unit);
+        var spanElement = document.createElement('span');
+        spanElement.className = "text-dark text-xs";
+        spanElement.textContent = categories[i] + ": " + total_unit.toLocaleString();
+        container2.appendChild(spanElement);
+        // Menambahkan line break setelah setiap elemen span, kecuali elemen terakhir
+        if (i < categories.length - 1) {
+          var lineBreak = document.createElement('br');
+          container2.appendChild(lineBreak);
+        }
+      }
+      document.getElementById('dataContainer3').innerHTML = total_units.toLocaleString();
+    }
+
+    // Function untuk update informasi berdasarkan masukan tahun
+    function updateButton_year1(selectedYear) {
+      document.getElementById('dropdownButton_year1').textContent = selectedYear;
+      if (selectedYear === 'Last 15 Years') {
+        var year = last_15_year;
+      } else if (selectedYear === 'Last 10 Years') {
+        var year = last_10_year;
+      } else if (selectedYear === 'Last 5 Years') {
+        var year = last_5_year;
+      }
+      data_bar1 = aggregateBarData(total_units_dataset, year);
+      data_pie1 = aggregatePieData(total_units_dataset, year);
+      // Menghapus chart sebelumnya jika ada
+      if (window.myChart1) {
+        window.myChart1.destroy();
+      }
+      if (window.myChart2) {
+        window.myChart2.destroy();
+      }
+      // Memanggil fungsi untuk memperbarui chart dengan data yang baru
+      ctx1 = document.getElementById("chart-bar1").getContext("2d");
+      window.myChart1 = updateChart1(data_bar1, ctx1);
+      // Memanggil fungsi untuk memperbarui chart dengan data yang baru
+      var ctx2 = document.getElementById("chart-pie1").getContext("2d");
+      window.myChart2 = updateChart2(data_pie1, ctx2);
+    }
+    
+
+
+    // Pembuatan bar & pie chart kedua (subcategory)
+    // Pembuatan bar & pie chart kedua (subcategory)
+    // Pembuatan bar & pie chart kedua (subcategory)
+    // Data untuk bar chart kedua
+    data_bar2 = aggregateBarDataSub(total_units_dataset, last_15_year, 'Komputer');
+    var ctx3 = document.getElementById("chart-bar2").getContext("2d");
+    window.myChart3 = updateChart1(data_bar2, ctx3);
+    
+    // Data untuk pie chart kedua
+    data_pie2 = aggregatePieDataSub(total_units_dataset, last_15_year, 'Komputer');
+    var ctx4 = document.getElementById("chart-pie2").getContext("2d");
+    window.myChart4 = updateChart2(data_pie2, ctx4);
+
+    // Function untuk filter data by year dan by category
+    function filterDataByYearAndCategory(data, year, category) {
+      return data.filter(function(sublist) {
+        return sublist[1] === category && sublist[0] >= year;
+      });
+    }
+
+    // Function untuk menghasilkan data agregasi yang digunakan untuk barchart berdasarkan batasan tahun dan category
+    function aggregateBarDataSub(data, year, category) {
+      var filteredData = filterDataByYearAndCategory(data, year, category);
+      var groupedSum = {};
+      var aggregatedData = [];
+    
+      filteredData.forEach(function(sublist) {
+        var key = sublist[0] + ' - ' + sublist[2];
+        if (groupedSum.hasOwnProperty(key)) {
+          groupedSum[key] += sublist[3];
+        } else {
+          groupedSum[key] = sublist[3];
+        }
+      });
+    
+      for (var key in groupedSum) {
+        var keys = key.split(' - ');
+        var sublist = [parseInt(keys[0]), keys[1], groupedSum[key]];
+        aggregatedData.push(sublist);
+      }
+    
+      // Mengurutkan array aggregatedData berdasarkan key[1]
+      aggregatedData.sort(function(a, b) {
+        var keyA = a[1].toLowerCase();
+        var keyB = b[1].toLowerCase();
+    
+        if (keyA < keyB) return -1;
+        if (keyA > keyB) return 1;
+        return 0;
+      });
+      return aggregatedData;
+    }
+
+    // Function untuk menghasilkan data agregasi yang digunakan untuk piechart berdasarkan batasan tahun dan category
+    function aggregatePieDataSub(data, year, category) {
+      var filteredData = filterDataByYearAndCategory(data, year, category);
+      var groupedSum = {};
+      var aggregatedData = [];
+    
+      filteredData.forEach(function(sublist) {
+        var key = sublist[2];
+        if (groupedSum.hasOwnProperty(key)) {
+          groupedSum[key] += sublist[3];
+        } else {
+          groupedSum[key] = sublist[3];
+        }
+      });
+    
+      for (var key in groupedSum) {
+        var keys = key.split(' - ');
+        var sublist = [keys[0], groupedSum[key]];
+        aggregatedData.push(sublist);
+      }
+      return aggregatedData;
+    }
+  
+    // Function untuk mendapatkan total unit per subcategory berdasarkan batasan tahun    
+    function get_total_subcategory_unit(data, year, subcategory_name) {
+      var total_units = 0;
+      for (var i = 0; i < data.length; i++) {
+        var result = data[i];
+        var year_perolehan = result[0];
+        var subcategory = result[2];
+        var jumlah_unit = parseInt(result[3]);
+
+        if (year_perolehan >= year && subcategory === subcategory_name) {
+          total_units += jumlah_unit;
+        }
+      }
+
+      return total_units;
+    }
+
+    // function untuk mendapatkan list subcategory dari Category
+    function get_subcategories(data, category) {
+      var subcategories = [];
+      data.forEach(function(sublist) {
+        if (sublist[1] === category && !subcategories.includes(sublist[2])) {
+          subcategories.push(sublist[2]);
+        }
+      });
+      return subcategories;
+    }    
+
+    // Function untuk melakukan aksi berdasarkan masukan category
+    function updateButton_category2(selectedCategory) {
+      document.getElementById('dropdownButton_category2').textContent = selectedCategory;
+      update_all_chart1(selectedCategory, document.getElementById('dropdownButton_year2').textContent);
+    }
+
+    // Function untuk melakukan aksi berdasarkan masukan tahun
+    function updateButton_year2(selectedYear) {
+      document.getElementById('dropdownButton_year2').textContent = selectedYear;
+      update_all_chart1(document.getElementById('dropdownButton_category2').textContent, selectedYear);
+    }
+
+    // Function update chart sesuai dengan tahun dan category yang dipilh
+    function update_all_chart1(selectedCategory, selectedYear) {
+      document.getElementById('dropdownButton_category2').textContent = selectedCategory;
+      document.getElementById('dropdownButton_year2').textContent = selectedYear;
+      if (selectedYear === 'Last 15 Years') {
+        var year = last_15_year;
+      } else if (selectedYear === 'Last 10 Years') {
+        var year = last_10_year;
+      } else if (selectedYear === 'Last 5 Years') {
+        var year = last_5_year;
+      }
+      // Menghapus chart sebelumnya jika ada
+      if (window.myChart3) {
+        window.myChart3.destroy();
+      }
+      // Menghapus chart sebelumnya jika ada
+      if (window.myChart4) {
+        window.myChart4.destroy();
+      }
+      // Data untuk bar chart kedua
+      data_bar2 = aggregateBarDataSub(total_units_dataset, year, selectedCategory);
+      var ctx3 = document.getElementById("chart-bar2").getContext("2d");
+      window.myChart3 = updateChart1(data_bar2, ctx3);
+      
+      // Data untuk pie chart kedua
+      data_pie2 = aggregatePieDataSub(total_units_dataset, year, selectedCategory);
+      var ctx4 = document.getElementById("chart-pie2").getContext("2d");
+      window.myChart4 = updateChart2(data_pie2, ctx4);
+    }
+
+    // Function untuk update informasi pada chart
+    function updateInformation2(selectedCategory) {
+      selectedYear = document.getElementById('dropdownButton_year2').textContent;
+      if (selectedYear === 'Last 15 Years') {
+        var year = last_15_year;
+      } else if (selectedYear === 'Last 10 Years') {
+        var year = last_10_year;
+      } else if (selectedYear === 'Last 5 Years') {
+        var year = last_5_year;
+      }
+      document.getElementById('dataContainer5').innerHTML = "From " + year + " to " + latest_year;
+      document.getElementById('dataContainer8').innerHTML = "From " + year + " to " + latest_year;
+      var container6 = document.getElementById('dataContainer6');
+      container6.innerHTML = '';
+      var total_units = 0;
+      var subcategories = get_subcategories(total_units_dataset, selectedCategory);
+      for (var i = 0; i < subcategories.length; i++) {
+        var total_unit = get_total_subcategory_unit(total_units_dataset, year, subcategories[i]);
+        total_units += parseInt(total_unit);
+        var spanElement = document.createElement('span');
+        spanElement.className = "text-dark text-xs";
+        spanElement.textContent = subcategories[i] + ": " + total_unit.toLocaleString();
+        container6.appendChild(spanElement);
+        // Menambahkan line break setelah setiap elemen span, kecuali elemen terakhir
+        if (i < subcategories.length - 1) {
+          var lineBreak = document.createElement('br');
+          container6.appendChild(lineBreak);
+        }
+      }
+      document.getElementById('dataContainer7').innerHTML = total_units.toLocaleString();
+    }
+
+    // Function untuk update informasi pada chart
+    function updateInformation3(selectedYear) {
+      selectedCategory = document.getElementById('dropdownButton_category2').textContent;
+      if (selectedYear === 'Last 15 Years') {
+        var year = last_15_year;
+      } else if (selectedYear === 'Last 10 Years') {
+        var year = last_10_year;
+      } else if (selectedYear === 'Last 5 Years') {
+        var year = last_5_year;
+      }
+      document.getElementById('dataContainer5').innerHTML = "From " + year + " to " + latest_year;
+      document.getElementById('dataContainer8').innerHTML = "From " + year + " to " + latest_year;
+      var container6 = document.getElementById('dataContainer6');
+      container6.innerHTML = '';
+      var total_units = 0;
+      var subcategories = get_subcategories(total_units_dataset, selectedCategory);
+      for (var i = 0; i < subcategories.length; i++) {
+        var total_unit = get_total_subcategory_unit(total_units_dataset, year, subcategories[i]);
+        total_units += parseInt(total_unit);
+        var spanElement = document.createElement('span');
+        spanElement.className = "text-dark text-xs";
+        spanElement.textContent = subcategories[i] + ": " + total_unit.toLocaleString();
+        container6.appendChild(spanElement);
+        // Menambahkan line break setelah setiap elemen span, kecuali elemen terakhir
+        if (i < subcategories.length - 1) {
+          var lineBreak = document.createElement('br');
+          container6.appendChild(lineBreak);
+        }
+      }
+      document.getElementById('dataContainer7').innerHTML = total_units.toLocaleString();
+    }
+
+  </script>
+{% endblock javascripts %}

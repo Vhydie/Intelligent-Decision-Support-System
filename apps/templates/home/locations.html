@@ -1,0 +1,223 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Locations Data {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+    
+    <div class="container-fluid py-4">
+      <div class="row">
+        <div class="col-12">
+          <div class="card mb-4">
+            <div class="card-header pb-0">
+              <div class="d-flex align-items-center">
+                <h6 class="me-2 flex-grow-1">Locations Table</h6>
+                <div class="d-flex nav-item dropdown">
+                  <a class="dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false"></a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="/asset_data">Asset Data</a></li>
+                    <li><a class="dropdown-item" href="/emissions">Asset Emissions</a></li>
+                    <li><a class="dropdown-item" href="/locations">Locations</a></li>
+                    <li><a class="dropdown-item" href="/emission_factors">Emissions Factors</a></li>
+                    <li><a class="dropdown-item" href="/asset_categories">Asset Category</a></li>
+                  </ul>
+                </div>
+                <div class="input-group mt-3 justify-content-end">
+                  <div class="row">
+                    <div class="col-auto">
+                    <form class="d-flex" method="POST" role="search">
+                      <div class="input-group">
+                          <select class="form-select form-select-sm text-body" id="searchBy" name="searchBy" aria-label="Search by" required>
+                              <option selected disabled>Select an option</option>
+                              <option value="building_name">Building Name</option>
+                              <option value="room_name">Room Name</option>
+                              <option value="location_code">Location Code</option>
+                          </select>
+                          <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
+                          <input type="text" class="form-control w-15" id="searchText" name="searchText" placeholder="Type here..." required>
+                        </div>
+                      </div>
+                      <div class="col-auto">
+                          <button type="submit" class="btn bg-gradient-primary mb-0" id="searchButton">Search</button>
+                      </div>
+                    </form>
+                    <div class="col-auto">
+                      <a class="btn bg-gradient-dark mb-0" href="javascript:;" data-bs-toggle="modal" data-bs-target="#create_new_modal">
+                        <i class="fas fa-plus"></i>
+                        &nbsp;&nbsp;Add New Data
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <div class="card-body px-0 pt-0 pb-2">
+              <div class="table-responsive p-0">
+                <table class="table align-items-center justify-content-center mb-0">
+                  <thead>
+                    <tr>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Location Code</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Building Name</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Room Name</th>
+                      <th></th>
+                      <th></th> 
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for location in locations.items %}
+                      <tr>
+                        <td class="text-sm font-weight-bold mb-0 ms-2">{{ location.kode_lokasi }}</td>
+                        <td class="text-sm font-weight-bold mb-0">{{ location.nama_gedung }}</td>
+                        <td class="text-sm font-weight-bold mb-0">{{ location.nama_ruang }}</td>
+                        <td class="align-middle">
+                          <a href="#" class="text-secondary font-weight-bold text-xs text-dark edit-btn" data-kode-lokasi="{{ location.kode_lokasi }}" data-nama-gedung="{{ location.nama_gedung }}" data-nama-ruang="{{ location.nama_ruang }}" data-bs-toggle="modal" data-bs-target="#edit_modal">
+                            <i class="fas fa-pencil-alt text-dark me-2" aria-hidden="true"></i>
+                            Edit
+                          </a>
+                        </td>
+                        <td class="align-middle">
+                          <form action="{{ url_for('home_blueprint.delete_location', location_id=location.kode_lokasi) }}" method="post">
+                            <input type="hidden" name="_method" value="POST">
+                            <button type="submit" class="bg-transparent border-0 text-xs text-danger" data-toggle="tooltip" data-original-title="Delete user">
+                              <i class="far fa-trash-alt me-2" aria-hidden="true"></i>
+                              Delete
+                            </button>
+                          </form>
+                        </td>                      
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="card-footer">
+              <nav aria-label="Locations Pagination">
+                <ul class="pagination justify-content-center mb-0">
+                  {% if locations.has_prev %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ locations.prev_num }}">Prev</a>
+                    </li>
+                  {% endif %}
+                  {% for num in locations.iter_pages(left_edge=1, left_current=1, right_current=2, right_edge=1) %}
+                    {% if num %}
+                      {% if locations.page == num %}
+                        <li class="page-item active" aria-current="page">
+                          <a class="page-link" href="?page={{ num }}"><strong>{{ num }}</strong></a>
+                        </li>
+                      {% else %}
+                        <li class="page-item">
+                          <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                      {% endif %}
+                    {% else %}
+                      <li class="page-item disabled">
+                        <span class="page-link">&hellip;</span>
+                      </li>
+                    {% endif %}
+                  {% endfor %}
+                  {% if locations.has_next %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ locations.next_num }}">Next</a>
+                    </li>
+                  {% endif %}
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>     
+      {% include "includes/footer.html" %}
+    </div>
+
+    <div class="modal fade" id="create_new_modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <form action="/add_location" method="POST" id="create-form">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Add New Locations Data</h5>
+          </div>
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label for="name">Location Code</label>
+                  <input id="location_code" class="form-control" name="location_code" placeholder="Location Code" required>
+                </div>
+                <div class="mb-3">
+                    <label for="name">Building Name</label>
+                    <input id="building_name" class="form-control" name="building_name" placeholder="Building Name" required>
+                </div>
+                <div class="mb-3">
+                  <label for="name">Room Name</label>
+                  <input id="room_name" class="form-control" name="room_name" placeholder="Room Name" required>
+                </div>
+                  <p id="create-error" class=" text-danger fw-bold"></p>
+              </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <input type="submit" class="btn btn-primary" value="Add Data">
+          </div>
+        </form>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal fade" id="edit_modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <form action="{{ url_for('home_blueprint.update_location', location_id='') }}" method="POST" id="edit-form">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Edit Location Data</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="location_code">Location Code</label>
+                <input id="location_code" class="form-control" name="location_code" readonly="readonly">
+              </div>
+              <div class="mb-3">
+                <label for="building_name">Building Name</label>
+                <input id="building_name" class="form-control" name="building_name" placeholder="Building Name" required>
+              </div>
+              <div class="mb-3">
+                <label for="room_name">Room Name</label>
+                <input id="room_name" class="form-control" name="room_name" placeholder="Room Name" required> 
+              </div>
+              <p id="create-error" class="text-danger fw-bold"></p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <input type="submit" class="btn btn-primary" value="Update Data">
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+{% endblock content %}
+
+{% block javascripts %}
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      $('.edit-btn').on('click', function(event) {
+        var button = $(event.target); // Tombol yang mengaktifkan modal
+        var kodeLokasi = button.data('kode-lokasi'); // Mengambil nilai dari atribut data-kode-lokasi
+        var buildingName = button.data('nama-gedung'); // Mengambil teks dari atribut data-nama-gedung
+        var roomName = button.data('nama-ruang'); // Mengambil teks dari atribut data-nama-ruang
+
+        // Menetapkan nilai kode_lokasi, building_name, dan room_name ke input di dalam modal
+        var modal = $('#edit_modal');
+        modal.find('#location_code').val(kodeLokasi);
+        modal.find('#building_name').val(buildingName);
+        modal.find('#room_name').val(roomName);
+
+        // Mengubah atribut action pada form untuk menyertakan ID lokasi
+        var form = modal.find('#edit-form');
+        var actionUrl = form.attr('action');
+        form.attr('action', actionUrl + kodeLokasi);
+      });
+    });
+  </script>
+  
+{% endblock %}
+

@@ -1,0 +1,364 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Carbon Calculation {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="container-fluid py-4">
+
+      <div class="row">
+        <div class="col-12">
+          <div class="card mb-4"> 
+            <div class="card-header pb-0">
+              <div class="d-flex align-items-center">
+                <h5 class="me-2 mt-2">Carbon Subcategory Calculation</h5>
+                <div class="d-flex nav-item dropdown">
+                  <a class="dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false"></a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="/carbon_calculation">Carbon Subcategory Emissions</a></li>
+                    <li><a class="dropdown-item" href="/asset_ef_calculation">Asset Emission Factors Calculation</a></li>
+                  </ul>
+                </div>
+              </div>
+              <div class="card-body px-0 pt-0 pb-2">
+                <div class="col-auto">
+                  <form class="needs-validation" novalidate>
+                    <div class="row g-3">
+                      <div class="col-md-5">
+                        <label for="category" class="form-label">IT Asset Category</label>
+                        <select class="form-select" id="category" required onchange="getSubcategories(this)">
+                          <option selected disabled>Select IT Asset Category</option>
+                          {% for category in asset_categories %}
+                            <option>{{ category[0] }}</option>
+                          {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">
+                          Please select a valid IT Asset Category.
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <label for="sub_category" class="form-label">IT Asset Subcategory</label>
+                        <select class="form-select" id="sub_category" required>
+                          <option selected disabled>Select IT Asset Subcategory</option>
+                        </select>
+                        <div class="invalid-feedback">
+                          Please provide a valid subcategory.
+                        </div>
+                      </div>
+              
+                      <div class="col-md-3">
+                        <label for="zip" class="form-label">Amount</label>
+                        <input type="text" class="form-control" id="zip" placeholder="Unit Count" pattern="[0-9]+" title="Please enter a numeric value" required>
+                        <div class="invalid-feedback">
+                          Unit count code required.
+                        </div>
+                      </div>
+                    <div class="my-3">
+                      <h6 class="mb-3">Do you know your IT Assets emission factors?</h6>
+                      <div class="form-check">
+                        <input id="first_option" name="emission_option" type="radio" class="form-check-input" required>
+                        <label class="form-check-label" for="first_option">No, just use the default emission factors</label>
+                      </div>
+                      <div class="form-check">
+                        <input id="second_option" name="emission_option" type="radio" class="form-check-input" required>
+                        <label class="form-check-label" for="second_option">Yes, I know the exact emission factors</label>
+                      </div>
+                      <div class="form-check">
+                        <input id="third_option" name="emission_option" type="radio" class="form-check-input" required>
+                        <label class="form-check-label" for="third_option">I only know the power consumption</label>
+                      </div>
+                    </div>
+              
+                    <div class="row auto">
+                      <div class="col auto" id="power_group" style="display: none;">
+                        <label for="power_value" class="form-label">Average Power Consumption</label>
+                        <div class="input-group has-validation">
+                          <input type="text" class="form-control" id="power_value" placeholder="Power Consumption" required>
+                          <div class="invalid-feedback">
+                            Power consumption is required.
+                          </div>
+                          <span class="input-group-text" id="ef_unit_power">Watt/Unit</span>
+                        </div>
+                      </div>
+                      <div class="col auto" id="usage_group" style="display: none;">
+                        <label for="usage_time" class="form-label">Usage Time</label>
+                        <div class="input-group has-validation">
+                          <input type="text" class="form-control" id="usage_time" placeholder="Usage Time (e.g. 8760)" required>
+                          <div class="invalid-feedback">
+                            Usage Time is required.
+                          </div>
+                          <span class="input-group-text" id="ef_unit_time">Hour/Year</span>
+                        </div>
+                      </div>
+                      <div class="col auto" id="ef_group" style="display: none;">
+                        <label for="ef_value" class="form-label">Emission Factors</label>
+                        <div class="input-group has-validation">
+                          <input type="text" class="form-control" id="ef_value" placeholder="Emission Factors" required>
+                          <div class="invalid-feedback">
+                            Emission factor is required.
+                          </div>
+                          <span class="input-group-text" id="ef_unit">kWh/Year</span>
+                        </div>
+                      </div>
+                    </div>
+                  <button class="btn bg-gradient-dark mb-0" type="submit">Calculate Emission</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row" id="resultContainer" style="display:none;">
+        <div class="col-12">
+          <div class="card mb-4">
+            <div class="card-header pb-0">
+              <h6>Carbon Subcategory Calculation Result</h6>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+              <div class="table-responsive p-0">
+                <table class="table align-items-center justify-content-center mb-0">
+                  <thead>
+                    <tr>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">IT Asset Subcategories</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">Amounts</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">Emission Factors</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">Energy</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">Cost</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">Carbon Emission</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+     
+      {% include "includes/footer.html" %}
+
+    </div>
+    
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    // Mendapatkan elemen-elemen yang diperlukan
+    var powerGroup = document.getElementById('power_group');
+    var usageGroup = document.getElementById('usage_group');
+    var efGroup = document.getElementById('ef_group');
+    var efValueInput = document.getElementById('ef_value');
+    // Mendapatkan elemen radio button
+    var noOption = document.getElementById('first_option');
+    var yesOption = document.getElementById('second_option');
+    var powerOption = document.getElementById('third_option');
+
+    // Script untuk menampilkan button sesuai dengan pilihan
+    noOption.addEventListener('change', function() {
+      powerGroup.style.display = 'none';
+      usageGroup.style.display = 'none';
+      efGroup.style.display = 'block';
+      // Mengisi nilai pada input box dengan ef_aset
+      var selectedCategory = document.getElementById('category').value;
+      var selectedSubCategory = document.getElementById('sub_category').value;
+      // Mengirim permintaan ke server untuk mendapatkan ef_aset
+      var xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          var efAset = xhr.responseText;
+          efValueInput.value = efAset;
+          efValueInput.readOnly = true; // Membuat input menjadi read-only
+        }
+      };
+      xhr.open('GET', '/get_ef_aset?category=' + selectedCategory + '&sub_category=' + selectedSubCategory, true);
+      xhr.send();
+    });
+    yesOption.addEventListener('change', function() {
+      powerGroup.style.display = 'none';
+      usageGroup.style.display = 'none';
+      efGroup.style.display = 'block';
+      // Menghapus atribut readonly untuk membuat input dapat diubah
+      efValueInput.readOnly = false;
+    });
+    powerOption.addEventListener('change', function() {
+      powerGroup.style.display = 'block';
+      usageGroup.style.display = 'block';
+      efGroup.style.display = 'block';
+      // Mendefinisikan fungsi untuk menghitung dan menampilkan efValue
+      function calculateEfValue() {
+        var powerValue = parseFloat(document.getElementById('power_value').value);
+        var usageTime = parseFloat(document.getElementById('usage_time').value);
+        var efValue = powerValue * usageTime / 1000;
+        efValueInput.value = efValue;
+      }
+      // Menghitung dan menampilkan efValue saat powerValue dan usageTime berubah
+      document.getElementById('power_value').addEventListener('input', calculateEfValue);
+      document.getElementById('usage_time').addEventListener('input', calculateEfValue);
+      // Memanggil fungsi calculateEfValue untuk menginisialisasi efValue
+      calculateEfValue();
+      // Mengatur efValueInput sebagai readonly
+      efValueInput.readOnly = true;
+    });
+
+    // Fucntion untuk menampilkan subcategories berdasarkan category
+    function getSubcategories(categorySelect) {
+      var category = categorySelect.value;
+      var subCategorySelect = document.getElementById('sub_category');
+      // Mengosongkan opsi saat ini
+      subCategorySelect.innerHTML = '<option selected disabled>Select IT Asset Subcategory</option>';
+      // Mengambil data dari server menggunakan AJAX
+      fetch('/sub_category/' + encodeURIComponent(category))
+        .then(response => response.json())
+        .then(data => {
+          var subCategories = data.sub_categories;
+          // Menambahkan opsi IT Asset Subcategory ke select element
+          for (var i = 0; i < subCategories.length; i++) {
+            var option = document.createElement('option');
+            option.text = subCategories[i];
+            subCategorySelect.add(option);
+          }
+        });
+    }
+
+    // Function untuk melaksanakan perhitungan carbon
+    document.querySelector('form').addEventListener('submit', function(event) {
+      var amountInput = document.getElementById('zip');
+      var efInput = document.getElementById('ef_value');
+      var isAmountValid = amountInput.value !== '';
+      var isEfValid = efInput.value !== '';
+    
+      if (!isAmountValid || !isEfValid) {
+        event.preventDefault(); // Mencegah pengiriman formulir jika input tidak valid
+        alert('Silakan isi semua field yang diperlukan sebelum menghitung.');
+        return;
+      }
+    
+      event.preventDefault(); // Mencegah pengiriman formulir
+      var resultContainer = document.getElementById("resultContainer");
+      resultContainer.style.display = "block";
+      // Mendapatkan nilai dari input Amount dan Emission Factors
+      var amount = parseInt(amountInput.value);
+      var efValue = parseFloat(efInput.value);
+      // Menghitung hasil perkalian
+      var energy = amount * efValue;
+      // Mengubah format angka ke dalam bentuk yang diinginkan
+      var amountFormatted = amount.toLocaleString();
+      var efValueFormatted = efValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var energyFormatted = energy.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      // Mendapatkan nama sub_category dari form
+      var sub_category = document.getElementById('sub_category').value;
+    
+      // Mendapatkan total emisi sub_category dari seluruh tahun menggunakan AJAX
+      var xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+          if (xhr.status === 200) {
+            var responseObj = JSON.parse(xhr.responseText);
+            var total_emission_subcategory = parseFloat(responseObj.total_emission);
+            var costValue = parseFloat(responseObj.cost);
+            var emissionValue = parseFloat(responseObj.emission);
+            var costFormatted = costValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            var emissionFormatted = emissionValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    
+            // Menghitung persentase hasil
+            var percentage = (emissionValue / total_emission_subcategory ) * 100;
+            var progressBarColor = '';
+            if (percentage <= 25) {
+              progressBarColor = 'bg-gradient-success';
+            } else if (percentage > 25 && percentage <= 50) {
+              progressBarColor = 'bg-gradient-info';
+            } else if (percentage > 50 && percentage <= 75) {
+              progressBarColor = 'bg-gradient-warning';
+            } else if (percentage >= 75) {
+              progressBarColor = 'bg-gradient-danger';
+            }
+            // Mengubah format angka persentase ke dalam bentuk yang diinginkan
+            var percentageFormatted = percentage.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+            // Memeriksa jika persentase lebih dari 100
+            if (percentage > 100) {
+              percentageFormatted = '> 100';
+            }
+    
+            // Mendapatkan tabel dan row hasil
+            var tableBody = document.querySelector('table tbody');
+            var newRow = document.createElement('tr');
+    
+            // Membuat elemen sel untuk IT Asset Subcategories
+            var subCategoryCell = document.createElement('td');
+            subCategoryCell.innerHTML = '<div class="d-flex px-2"><div class="my-auto"><h6 class="text-sm">' + sub_category + '</h6></div></div>';
+    
+            // Membuat elemen sel untuk Amounts
+            var amountCell = document.createElement('td');
+            amountCell.innerHTML = '<span class="text-sm font-weight-bold">' + amountFormatted + '</span>';
+    
+            // Membuat elemen sel untuk Emission Factors
+            var efCell = document.createElement('td');
+            efCell.innerHTML = '<span class="text-sm font-weight-bold">' + efValueFormatted + ' kWh/Year</span>';
+    
+            // Membuat elemen sel untuk Total Energy
+            var totalEnergyCell = document.createElement('td');
+            totalEnergyCell.innerHTML = '<span class="text-sm font-weight-bold">' + energyFormatted + ' kWh/Year</span>';
+    
+            // Membuat elemen sel untuk Total Cost
+            var totalCostCell = document.createElement('td');
+            totalCostCell.innerHTML = '<span class="text-sm font-weight-bold">Rp ' + costFormatted + '</span>';
+    
+            // Membuat elemen sel untuk Results
+            var resultCell = document.createElement('td');
+            resultCell.classList.add('align-middle', 'text-center');
+            resultCell.innerHTML = '<div class="d-flex flex-column align-items-center justify-content-center"><span class="me-2 text-s font-weight-bold">' + emissionFormatted + ' kg CO2</span><div class="d-flex align-items-center justify-content-center"><span class="me-2 text-xs font-weight-bold">' + percentageFormatted + '%</span><div><div class="progress"><div class="progress-bar ' + progressBarColor + '" role="progressbar" aria-valuenow="' + percentage + '" aria-valuemin="0" aria-valuemax="100" style="width: ' + percentage + '%;"></div></div></div></div></div>';
+    
+            // Menambahkan sel-sel ke dalam baris
+            newRow.appendChild(subCategoryCell);
+            newRow.appendChild(amountCell);
+            newRow.appendChild(efCell);
+            newRow.appendChild(totalEnergyCell);
+            newRow.appendChild(totalCostCell);
+            newRow.appendChild(resultCell);
+    
+            // Menambahkan baris ke dalam tabel
+            if (tableBody.firstChild) {
+              tableBody.insertBefore(newRow, tableBody.firstChild);
+            } else {
+              tableBody.appendChild(newRow);
+            }
+    
+            // Mengosongkan seluruh masukan dalam formulir
+            document.querySelector('form').reset();
+            powerGroup.style.display = 'none';
+            usageGroup.style.display = 'none';
+            efGroup.style.display = 'none';
+    
+          } else {
+            // Menangani kesalahan jika permintaan tidak berhasil
+            console.error('Failed to retrieve total energy for sub_category');
+          }
+        }
+      };
+    
+      // Membuat objek data untuk dikirim melalui permintaan POST
+      var data = {
+        total_energy: energy,
+        sub_category: sub_category
+      };
+    
+      // Mengubah data menjadi format JSON
+      var jsonData = JSON.stringify(data);
+    
+      // Mengirim permintaan POST ke endpoint '/calculate'
+      xhr.open('POST', '/calculate');
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.send(jsonData);
+    });
+    
+  </script>
+  
+{% endblock javascripts %}
+
